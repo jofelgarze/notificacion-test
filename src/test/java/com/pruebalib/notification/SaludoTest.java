@@ -4,13 +4,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class LibraryTest {
+class SaludoTest {
 
     @Test
     void greetReturnsCapitalizedMessage() {
-        Library library = new Library();
+        Saludo library = new Saludo();
         String result = library.greet("mundo");
 
-        assertEquals("Hola Mundo desde la librería", result);
+        assertEquals("Hola MUNDO desde la librería", result);
     }
 }

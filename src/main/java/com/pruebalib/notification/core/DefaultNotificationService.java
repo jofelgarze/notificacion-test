@@ -17,7 +17,7 @@ public class DefaultNotificationService implements NotificationService {
 
     public DefaultNotificationService(NotificationSenderRegistry registry, Executor executor) {
         this.registry = Objects.requireNonNull(registry, "NotificationSenderRegistry no debe ser nulo");
-        this.executor = Objects.requireNonNull(executor, "exce cutor no debe ser nulo");
+        this.executor = Objects.requireNonNull(executor, "excecutor no debe ser nulo");
     }
 
     @Override
