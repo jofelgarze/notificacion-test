@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.provider.push.PushConfig;
+import com.pruebalib.notification.provider.push.PushNotificationSender;
 import com.pruebalib.notification.provider.sms.SmsConfig;
 import com.pruebalib.notification.provider.sms.SmsNotificationSender;
 import com.pruebalib.notification.spi.NotificationSender;
@@ -20,10 +22,11 @@ class InMemoryNotificationSenderRegistryTest {
     void shouldResolveSmsSender() {
         SmsNotificationSender smsSender = new SmsNotificationSender(
                 new SmsConfig("acct-123", "token-xyz", "+15005550006", "https://api.sms-provider.local"));
-        NotificationSender pushLikeSender = new FixedTargetSender("push");
+        PushNotificationSender pushSender = new PushNotificationSender(
+                new PushConfig("project-demo", "token-demo", "https://api.push-provider.local"));
 
         InMemoryNotificationSenderRegistry registry = new InMemoryNotificationSenderRegistry(
-                List.of(pushLikeSender, smsSender));
+                List.of(pushSender, smsSender));
 
         NotificationSender resolved = registry.resolve(new NotificationRequest(
                 "sms",
@@ -38,10 +41,11 @@ class InMemoryNotificationSenderRegistryTest {
     void shouldResolveOtherCompatibleSender() {
         NotificationSender smsSender = new SmsNotificationSender(
                 new SmsConfig("acct-123", "token-xyz", "+15005550006", "https://api.sms-provider.local"));
-        NotificationSender pushLikeSender = new FixedTargetSender("push");
+        NotificationSender pushSender = new PushNotificationSender(
+                new PushConfig("project-demo", "token-demo", "https://api.push-provider.local"));
 
         InMemoryNotificationSenderRegistry registry = new InMemoryNotificationSenderRegistry(
-                List.of(smsSender, pushLikeSender));
+                List.of(smsSender, pushSender));
 
         NotificationSender resolved = registry.resolve(new NotificationRequest(
                 "push",
@@ -49,37 +53,20 @@ class InMemoryNotificationSenderRegistryTest {
                 "Titulo",
                 "Mensaje"));
 
-        assertInstanceOf(FixedTargetSender.class, resolved);
-        assertSame(pushLikeSender, resolved);
+        assertInstanceOf(PushNotificationSender.class, resolved);
+        assertSame(pushSender, resolved);
     }
 
     @Test
     void shouldThrowWhenNoCompatibleSenderExists() {
         InMemoryNotificationSenderRegistry registry = new InMemoryNotificationSenderRegistry(
-                List.of(new FixedTargetSender("push")));
+                List.of(new PushNotificationSender(
+                        new PushConfig("project-demo", "token-demo", "https://api.push-provider.local"))));
 
         assertThrows(IllegalArgumentException.class, () -> registry.resolve(new NotificationRequest(
                 "sms",
                 "+593999999999",
                 null,
                 "Codigo")));
-    }
-
-    private static final class FixedTargetSender implements NotificationSender {
-        private final String target;
-
-        private FixedTargetSender(String target) {
-            this.target = target;
-        }
-
-        @Override
-        public boolean supports(NotificationRequest request) {
-            return request != null && target.equalsIgnoreCase(request.getTarget());
-        }
-
-        @Override
-        public NotificationResult send(NotificationRequest request) {
-            return NotificationResult.success("fixed-id", "fixed");
-        }
     }
 }
