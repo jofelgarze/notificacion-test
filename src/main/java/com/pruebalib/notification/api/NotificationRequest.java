@@ -4,24 +4,28 @@ import java.util.Objects;
 
 public final class NotificationRequest {
 
-    private final String destination;
+    private final String target;
+    private final String recipient;
     private final String subject;
     private final String message;
-    private final NotificationMetadata metadata;
 
     public NotificationRequest(
-            String destination,
+            String target,
+            String recipient,
             String subject,
-            String message,
-            NotificationMetadata metadata) {
-        this.destination = Objects.requireNonNull(destination, "destination must not be null");
+            String message) {
+        this.target = Objects.requireNonNull(target, "target must not be null");
+        this.recipient = Objects.requireNonNull(recipient, "recipient must not be null");
         this.subject = subject;
         this.message = Objects.requireNonNull(message, "message must not be null");
-        this.metadata = metadata == null ? new NotificationMetadata(null) : metadata;
     }
 
-    public String getDestination() {
-        return destination;
+    public String getTarget() {
+        return target;
+    }
+
+    public String getRecipient() {
+        return recipient;
     }
 
     public String getSubject() {
@@ -30,9 +34,5 @@ public final class NotificationRequest {
 
     public String getMessage() {
         return message;
-    }
-
-    public NotificationMetadata getMetadata() {
-        return metadata;
     }
 }

@@ -16,7 +16,8 @@ public abstract class AbstractNotificationSender implements NotificationSender {
 
     protected void validateRequest(NotificationRequest request) {
         Objects.requireNonNull(request, "el objeto request no debe ser nulo");
-        Objects.requireNonNull(request.getDestination(), "destino no debe ser nulo");
+        Objects.requireNonNull(request.getTarget(), "target no debe ser nulo");
+        Objects.requireNonNull(request.getRecipient(), "recipient no debe ser nulo");
         Objects.requireNonNull(request.getMessage(), "el mensaje no debe ser nulo");
     }
 

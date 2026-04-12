@@ -10,7 +10,7 @@ public final class SmtpRequestMapper {
         }
 
         return new SmtpPayload(
-                request.getDestination(),
+                request.getRecipient(),
                 request.getSubject(),
                 request.getMessage());
     }

@@ -21,6 +21,6 @@ public class InMemoryNotificationSenderRegistry implements NotificationSenderReg
                 .filter(sender -> sender.supports(request))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "No se encontro proveedor compatible con metada: " + request.getMetadata().asMap()));
+                        "No se encontro sender compatible con target: " + request.getTarget()));
     }
 }

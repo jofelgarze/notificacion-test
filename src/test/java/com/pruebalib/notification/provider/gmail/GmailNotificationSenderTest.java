@@ -1,34 +1,31 @@
 package com.pruebalib.notification.provider.gmail;
 
-import com.pruebalib.notification.api.NotificationMetadata;
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
-import com.pruebalib.notification.core.NotificationAttributes;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GmailNotificationSenderTest {
 
         @Test
-        void shouldSupportGmailEmailRequests() {
-                NotificationMetadata metadata = new NotificationMetadata(Map.of(
-                                NotificationAttributes.CHANNEL, "email",
-                                NotificationAttributes.PROVIDER, "gmail",
-                                "gmail.username", "test@gmail.com",
-                                "gmail.password", "secret123",
-                                "mail.smtp.port", "465",
-                                "mail.smtp.ssl.enable", "false"));
-
+        void shouldSupportSendGmailRequests() {
                 NotificationRequest request = new NotificationRequest(
-                                "jofelgarze@gmail.com",
+                                "gmail",
+                                "detination@gmail.com",
                                 "Prueba Gmail",
-                                "Mensaje de prueba 2",
-                                metadata);
+                                "Mensaje de prueba");
 
-                GmailNotificationSender sender = new GmailNotificationSender();
+                GmailNotificationSender sender = new GmailNotificationSender(
+                                new GmailConfig("test@gmail.com", "secret123", "test@gmail.com", null,
+                                                465, false,
+                                                true));
+
+                assertTrue(sender.supports(request));
+
                 NotificationResult result = sender.send(request);
 
                 assertNotNull(result);
@@ -39,19 +36,14 @@ class GmailNotificationSenderTest {
 
         @Test
         void shouldNotSupportNonGmailRequests() {
-                NotificationMetadata metadata = new NotificationMetadata(Map.of(
-                                NotificationAttributes.CHANNEL, "email",
-                                NotificationAttributes.PROVIDER, "smtp",
-                                "smtp.username", "user@example.com",
-                                "smtp.password", "secret"));
-
                 NotificationRequest request = new NotificationRequest(
-                                "destino@example.com",
+                                "smtp",
+                                "dest@example.com",
                                 "Prueba SMTP",
-                                "Mensaje de prueba",
-                                metadata);
+                                "Mensaje de prueba");
 
-                GmailNotificationSender sender = new GmailNotificationSender();
+                GmailNotificationSender sender = new GmailNotificationSender(
+                                new GmailConfig("user@gmail.com", "secret", null, null, 587, true, false));
 
                 assertFalse(sender.supports(request));
         }

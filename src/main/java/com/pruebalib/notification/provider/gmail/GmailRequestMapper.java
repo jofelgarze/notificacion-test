@@ -10,7 +10,7 @@ public final class GmailRequestMapper {
         }
 
         return new GmailPayload(
-                request.getDestination(),
+                request.getRecipient(),
                 request.getSubject(),
                 request.getMessage());
     }
