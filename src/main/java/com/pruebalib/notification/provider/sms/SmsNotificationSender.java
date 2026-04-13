@@ -5,9 +5,10 @@ import java.util.Objects;
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.common.exception.NotificationDeliveryException;
-import com.pruebalib.notification.common.exception.NotificationValidationException;
-import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
+import com.pruebalib.notification.core.validation.ChannelNotificationValidator;
+import com.pruebalib.notification.core.validation.DefaultNotificationRequestValidator;
+import com.pruebalib.notification.core.validation.SmsNotificationValidator;
 
 public final class SmsNotificationSender extends AbstractNotificationSender<SmsConfig> {
 
@@ -16,15 +17,33 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
 
     private final SmsRequestMapper mapper;
     private final SmsClient client;
+    private final ChannelNotificationValidator validator;
 
     public SmsNotificationSender(SmsConfig config) {
-        this(config, new SmsRequestMapper(), new SmsClient());
+        this(
+                config,
+                new SmsRequestMapper(),
+                new SmsClient(),
+                new SmsNotificationValidator(CHANNEL, "SMS", new DefaultNotificationRequestValidator()));
     }
 
     public SmsNotificationSender(SmsConfig config, SmsRequestMapper mapper, SmsClient client) {
+        this(
+                config,
+                mapper,
+                client,
+                new SmsNotificationValidator(CHANNEL, "SMS", new DefaultNotificationRequestValidator()));
+    }
+
+    SmsNotificationSender(
+            SmsConfig config,
+            SmsRequestMapper mapper,
+            SmsClient client,
+            ChannelNotificationValidator validator) {
         super(config);
         this.mapper = Objects.requireNonNull(mapper, "SmsRequestMapper no debe ser nulo");
         this.client = Objects.requireNonNull(client, "SmsClient no debe ser nulo");
+        this.validator = Objects.requireNonNull(validator, "validator no debe ser nulo");
     }
 
     @Override
@@ -39,16 +58,7 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
 
     @Override
     protected void validateRequest(NotificationRequest request) {
-        requireRequest(request);
-        requireChannel(request);
-        requireRecipient(request);
-        requireMessage(request);
-        if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
-            throw new NotificationValidationException("SmsNotificationSender solo soporta channel sms");
-        }
-        if (!RecipientFormatUtils.isPhone(request.getRecipient())) {
-            throw new NotificationValidationException("El recipient debe ser un numero telefonico valido para SMS");
-        }
+        validator.validate(request);
     }
 
     @Override

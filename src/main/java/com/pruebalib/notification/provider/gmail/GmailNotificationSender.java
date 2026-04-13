@@ -5,9 +5,10 @@ import java.util.Objects;
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.common.exception.NotificationDeliveryException;
-import com.pruebalib.notification.common.exception.NotificationValidationException;
-import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
+import com.pruebalib.notification.core.validation.ChannelNotificationValidator;
+import com.pruebalib.notification.core.validation.DefaultNotificationRequestValidator;
+import com.pruebalib.notification.core.validation.EmailNotificationValidator;
 
 public final class GmailNotificationSender extends AbstractNotificationSender<GmailConfig> {
 
@@ -16,15 +17,33 @@ public final class GmailNotificationSender extends AbstractNotificationSender<Gm
 
     private final GmailRequestMapper mapper;
     private final GmailClient client;
+    private final ChannelNotificationValidator validator;
 
     public GmailNotificationSender(GmailConfig config) {
-        this(config, new GmailRequestMapper(), new GmailClient());
+        this(
+                config,
+                new GmailRequestMapper(),
+                new GmailClient(),
+                new EmailNotificationValidator(CHANNEL, "Gmail", new DefaultNotificationRequestValidator()));
     }
 
     public GmailNotificationSender(GmailConfig config, GmailRequestMapper mapper, GmailClient client) {
+        this(
+                config,
+                mapper,
+                client,
+                new EmailNotificationValidator(CHANNEL, "Gmail", new DefaultNotificationRequestValidator()));
+    }
+
+    GmailNotificationSender(
+            GmailConfig config,
+            GmailRequestMapper mapper,
+            GmailClient client,
+            ChannelNotificationValidator validator) {
         super(config);
         this.mapper = Objects.requireNonNull(mapper, "GmailRequestMapper no debe ser nulo");
         this.client = Objects.requireNonNull(client, "GmailClient no debe ser nulo");
+        this.validator = Objects.requireNonNull(validator, "validator no debe ser nulo");
     }
 
     @Override
@@ -39,16 +58,7 @@ public final class GmailNotificationSender extends AbstractNotificationSender<Gm
 
     @Override
     protected void validateRequest(NotificationRequest request) {
-        requireRequest(request);
-        requireChannel(request);
-        requireRecipient(request);
-        requireMessage(request);
-        if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
-            throw new NotificationValidationException("GmailNotificationSender solo soporta channel email");
-        }
-        if (!RecipientFormatUtils.isEmail(request.getRecipient())) {
-            throw new NotificationValidationException("El recipient debe ser un email valido para Gmail");
-        }
+        validator.validate(request);
     }
 
     @Override

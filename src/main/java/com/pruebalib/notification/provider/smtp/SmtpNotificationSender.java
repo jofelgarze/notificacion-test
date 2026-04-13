@@ -5,9 +5,10 @@ import java.util.Objects;
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.common.exception.NotificationDeliveryException;
-import com.pruebalib.notification.common.exception.NotificationValidationException;
-import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
+import com.pruebalib.notification.core.validation.ChannelNotificationValidator;
+import com.pruebalib.notification.core.validation.DefaultNotificationRequestValidator;
+import com.pruebalib.notification.core.validation.EmailNotificationValidator;
 
 public final class SmtpNotificationSender extends AbstractNotificationSender<SmtpConfig> {
 
@@ -16,15 +17,33 @@ public final class SmtpNotificationSender extends AbstractNotificationSender<Smt
 
     private final SmtpRequestMapper mapper;
     private final SmtpClient client;
+    private final ChannelNotificationValidator validator;
 
     public SmtpNotificationSender(SmtpConfig config) {
-        this(config, new SmtpRequestMapper(), new SmtpClient());
+        this(
+                config,
+                new SmtpRequestMapper(),
+                new SmtpClient(),
+                new EmailNotificationValidator(CHANNEL, "SMTP", new DefaultNotificationRequestValidator()));
     }
 
     public SmtpNotificationSender(SmtpConfig config, SmtpRequestMapper mapper, SmtpClient client) {
+        this(
+                config,
+                mapper,
+                client,
+                new EmailNotificationValidator(CHANNEL, "SMTP", new DefaultNotificationRequestValidator()));
+    }
+
+    SmtpNotificationSender(
+            SmtpConfig config,
+            SmtpRequestMapper mapper,
+            SmtpClient client,
+            ChannelNotificationValidator validator) {
         super(config);
         this.mapper = Objects.requireNonNull(mapper, "SmtpRequestMapper no debe ser nulo");
         this.client = Objects.requireNonNull(client, "SmtpClient no debe ser nulo");
+        this.validator = Objects.requireNonNull(validator, "validator no debe ser nulo");
     }
 
     @Override
@@ -39,16 +58,7 @@ public final class SmtpNotificationSender extends AbstractNotificationSender<Smt
 
     @Override
     protected void validateRequest(NotificationRequest request) {
-        requireRequest(request);
-        requireChannel(request);
-        requireRecipient(request);
-        requireMessage(request);
-        if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
-            throw new NotificationValidationException("SmtpNotificationSender solo soporta channel email");
-        }
-        if (!RecipientFormatUtils.isEmail(request.getRecipient())) {
-            throw new NotificationValidationException("El recipient debe ser un email valido para SMTP");
-        }
+        validator.validate(request);
     }
 
     @Override

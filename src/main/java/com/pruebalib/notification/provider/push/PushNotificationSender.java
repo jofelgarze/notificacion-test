@@ -5,9 +5,10 @@ import java.util.Objects;
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.common.exception.NotificationDeliveryException;
-import com.pruebalib.notification.common.exception.NotificationValidationException;
-import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
+import com.pruebalib.notification.core.validation.ChannelNotificationValidator;
+import com.pruebalib.notification.core.validation.DefaultNotificationRequestValidator;
+import com.pruebalib.notification.core.validation.PushNotificationValidator;
 
 public final class PushNotificationSender extends AbstractNotificationSender<PushConfig> {
 
@@ -16,15 +17,33 @@ public final class PushNotificationSender extends AbstractNotificationSender<Pus
 
     private final PushRequestMapper mapper;
     private final PushClient client;
+    private final ChannelNotificationValidator validator;
 
     public PushNotificationSender(PushConfig config) {
-        this(config, new PushRequestMapper(), new PushClient());
+        this(
+                config,
+                new PushRequestMapper(),
+                new PushClient(),
+                new PushNotificationValidator(CHANNEL, "Push", new DefaultNotificationRequestValidator()));
     }
 
     public PushNotificationSender(PushConfig config, PushRequestMapper mapper, PushClient client) {
+        this(
+                config,
+                mapper,
+                client,
+                new PushNotificationValidator(CHANNEL, "Push", new DefaultNotificationRequestValidator()));
+    }
+
+    PushNotificationSender(
+            PushConfig config,
+            PushRequestMapper mapper,
+            PushClient client,
+            ChannelNotificationValidator validator) {
         super(config);
         this.mapper = Objects.requireNonNull(mapper, "PushRequestMapper no debe ser nulo");
         this.client = Objects.requireNonNull(client, "PushClient no debe ser nulo");
+        this.validator = Objects.requireNonNull(validator, "validator no debe ser nulo");
     }
 
     @Override
@@ -39,16 +58,7 @@ public final class PushNotificationSender extends AbstractNotificationSender<Pus
 
     @Override
     protected void validateRequest(NotificationRequest request) {
-        requireRequest(request);
-        requireChannel(request);
-        requireRecipient(request);
-        requireMessage(request);
-        if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
-            throw new NotificationValidationException("PushNotificationSender solo soporta channel push");
-        }
-        if (!RecipientFormatUtils.isPushToken(request.getRecipient())) {
-            throw new NotificationValidationException("El recipient debe ser un token valido para Push");
-        }
+        validator.validate(request);
     }
 
     @Override
