@@ -1,5 +1,6 @@
 package com.pruebalib.notification.api;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.pruebalib.notification.common.exception.NotificationConfigurationException;
@@ -11,6 +12,26 @@ public interface NotificationService {
     NotificationResult send(NotificationRequest request);
 
     CompletableFuture<NotificationResult> sendAsync(NotificationRequest request);
+
+    default List<NotificationResult> sendBatch(List<NotificationRequest> requests) {
+        if (requests == null) {
+            throw new NotificationValidationException("requests no debe ser nulo");
+        }
+
+        return requests.stream()
+                .map(this::send)
+                .toList();
+    }
+
+    default CompletableFuture<List<NotificationResult>> sendBatchAsync(List<NotificationRequest> requests) {
+        if (requests == null) {
+            CompletableFuture<List<NotificationResult>> failedFuture = new CompletableFuture<>();
+            failedFuture.completeExceptionally(new NotificationValidationException("requests no debe ser nulo"));
+            return failedFuture;
+        }
+
+        return CompletableFuture.supplyAsync(() -> sendBatch(requests));
+    }
 
     default NotificationResult sendOrThrow(NotificationRequest request) {
         NotificationResult result = send(request);

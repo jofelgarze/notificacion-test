@@ -89,6 +89,28 @@ class DefaultNotificationService implements NotificationService {
         return CompletableFuture.supplyAsync(() -> send(request), executor);
     }
 
+    @Override
+    public List<NotificationResult> sendBatch(List<NotificationRequest> requests) {
+        if (requests == null) {
+            throw new NotificationValidationException("requests no debe ser nulo");
+        }
+
+        return requests.stream()
+                .map(this::send)
+                .toList();
+    }
+
+    @Override
+    public CompletableFuture<List<NotificationResult>> sendBatchAsync(List<NotificationRequest> requests) {
+        if (requests == null) {
+            CompletableFuture<List<NotificationResult>> failedFuture = new CompletableFuture<>();
+            failedFuture.completeExceptionally(new NotificationValidationException("requests no debe ser nulo"));
+            return failedFuture;
+        }
+
+        return CompletableFuture.supplyAsync(() -> sendBatch(requests), executor);
+    }
+
     private String nextTrackerId() {
         return UUID.randomUUID().toString();
     }

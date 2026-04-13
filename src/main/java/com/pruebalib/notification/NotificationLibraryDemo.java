@@ -1,6 +1,10 @@
 package com.pruebalib.notification;
 
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
@@ -23,19 +27,33 @@ public final class NotificationLibraryDemo {
     }
 
     public static void main(String[] args) {
-        NotificationService service = createNotificationService();
 
-        NotificationResult emailResult = service.send(exampleEmailRequest());
-        NotificationResult smsResult = service.send(exampleSmsRequest());
-        NotificationResult pushResult = service.send(examplePushRequest());
+        // Pool acotado para evitar concurrencia excesiva sobre proveedores externos.
+        ExecutorService executor = Executors.newFixedThreadPool(8);
 
-        printResult("EMAIL", emailResult);
-        printResult("SMS", smsResult);
-        printResult("PUSH", pushResult);
+        try {
+            NotificationService service = createNotificationService(executor);
+
+            NotificationResult emailResult = service.send(exampleEmailRequest());
+            NotificationResult smsResult = service.send(exampleSmsRequest());
+            NotificationResult pushResult = service.send(examplePushRequest());
+            List<NotificationResult> batchResults = sendBatchExample(service);
+
+            printResult("EMAIL", emailResult);
+            printResult("SMS", smsResult);
+            printResult("PUSH", pushResult);
+            printBatchResults(batchResults);
+        } finally {
+            executor.shutdown();
+        }
     }
 
     public static NotificationService createNotificationService() {
-        return NotificationServiceFactory.create(configuredSenders(), configuredListeners());
+        return createNotificationService(Runnable::run);
+    }
+
+    public static NotificationService createNotificationService(Executor executor) {
+        return NotificationServiceFactory.create(configuredSenders(), executor, configuredListeners());
     }
 
     public static List<NotificationSender> configuredSenders() {
@@ -128,5 +146,25 @@ public final class NotificationLibraryDemo {
                 + ", provider=" + result.getProvider()
                 + ", messageId=" + result.getProviderMessageId()
                 + ", description=" + result.getDescription());
+    }
+
+    private static List<NotificationResult> sendBatchExample(NotificationService service) {
+        try {
+            return service.sendBatchAsync(List.of(
+                    exampleEmailRequest(),
+                    exampleSmsRequest(),
+                    examplePushRequest())).get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("La demo de batch fue interrumpida", e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("La demo de batch fallo", e);
+        }
+    }
+
+    private static void printBatchResults(List<NotificationResult> results) {
+        for (int index = 0; index < results.size(); index++) {
+            printResult("BATCH[" + index + "]", results.get(index));
+        }
     }
 }

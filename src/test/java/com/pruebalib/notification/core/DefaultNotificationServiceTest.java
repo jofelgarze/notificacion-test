@@ -69,6 +69,40 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe enviar en lote preservando el orden de los requests")
+    void shouldSendBatchPreservingRequestOrder() {
+        NotificationRequest first = new NotificationRequest("sms", "+593999999999", null, "Codigo 1");
+        NotificationRequest second = new NotificationRequest("sms", "+593999999998", null, "Codigo 2");
+
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(new CapturingSender(NotificationResult.success("sms", "sms", "id-1", "ok"))),
+                Runnable::run);
+
+        List<NotificationResult> results = service.sendBatch(List.of(first, second));
+
+        assertEquals(2, results.size());
+        assertEquals("id-1", results.get(0).getProviderMessageId());
+        assertEquals("id-1", results.get(1).getProviderMessageId());
+    }
+
+    @Test
+    @DisplayName("Debe ejecutar el batch asincrono usando el executor configurado")
+    void shouldDelegateBatchAsyncUsingExecutor() {
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(new CapturingSender(NotificationResult.success("sms", "sms", "id-1", "ok"))),
+                new CountingExecutor());
+
+        CompletableFuture<List<NotificationResult>> future = service.sendBatchAsync(List.of(
+                new NotificationRequest("sms", "+593999999999", null, "Codigo 1"),
+                new NotificationRequest("sms", "+593999999998", null, "Codigo 2")));
+
+        List<NotificationResult> results = future.join();
+
+        assertEquals(2, results.size());
+        assertTrue(future.isDone());
+    }
+
+    @Test
     @DisplayName("Debe mantener el mismo flujo cliente para el canal unificado de email")
     void shouldUseSameClientFlowForUnifiedEmailChannel() {
         NotificationRequest request = new NotificationRequest(
