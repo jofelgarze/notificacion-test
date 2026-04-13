@@ -8,11 +8,16 @@ import org.junit.jupiter.api.Test;
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.api.NotificationResultType;
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+import com.pruebalib.notification.common.exception.NotificationDeliveryException;
+import com.pruebalib.notification.common.exception.NotificationValidationException;
+import com.pruebalib.notification.common.exception.UnsupportedChannelException;
 import com.pruebalib.notification.spi.NotificationSender;
 import com.pruebalib.notification.spi.NotificationSenderRegistry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultNotificationServiceTest {
@@ -89,18 +94,20 @@ class DefaultNotificationServiceTest {
 
         assertEquals(NotificationResultType.VALIDATION_ERROR, result.getType());
         assertTrue(!result.isSuccessful());
+        assertEquals("REQUEST_NULL", result.getErrorCode());
     }
 
     @Test
     void shouldReturnUnsupportedChannelWhenRegistryCannotResolve() {
         DefaultNotificationService service = new DefaultNotificationService(
-                new ThrowingRegistry(new IllegalArgumentException("No se encontro sender compatible con channel: fax")),
+                new ThrowingRegistry(new UnsupportedChannelException("No se encontro sender compatible con channel: fax")),
                 Runnable::run);
 
         NotificationResult result = service.send(new NotificationRequest("fax", "123", null, "hola"));
 
         assertEquals(NotificationResultType.UNSUPPORTED_CHANNEL, result.getType());
         assertTrue(!result.isSuccessful());
+        assertEquals("UNSUPPORTED_CHANNEL", result.getErrorCode());
     }
 
     @Test
@@ -113,6 +120,30 @@ class DefaultNotificationServiceTest {
 
         assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
         assertTrue(!result.isSuccessful());
+        assertEquals("UNEXPECTED_ERROR", result.getErrorCode());
+    }
+
+    @Test
+    void shouldMapValidationExceptionFromSender() {
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(new ThrowingSender(new NotificationValidationException("recipient invalido"))),
+                Runnable::run);
+
+        NotificationResult result = service.send(new NotificationRequest("sms", "+593999999999", null, "Codigo"));
+
+        assertEquals(NotificationResultType.VALIDATION_ERROR, result.getType());
+        assertEquals("VALIDATION_ERROR", result.getErrorCode());
+        assertEquals("recipient invalido", result.getTechnicalMessage());
+    }
+
+    @Test
+    void shouldSupportSendOrThrow() {
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(new ThrowingSender(new NotificationConfigurationException("config invalida"))),
+                Runnable::run);
+
+        assertThrows(NotificationConfigurationException.class,
+                () -> service.sendOrThrow(new NotificationRequest("sms", "+593999999999", null, "Codigo")));
     }
 
     private static final class CapturingRegistry implements NotificationSenderRegistry {

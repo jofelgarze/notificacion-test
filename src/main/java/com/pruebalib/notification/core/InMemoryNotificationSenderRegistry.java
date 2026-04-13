@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
+import com.pruebalib.notification.common.exception.UnsupportedChannelException;
 import com.pruebalib.notification.spi.NotificationSender;
 import com.pruebalib.notification.spi.NotificationSenderRegistry;
 
@@ -20,7 +21,7 @@ class InMemoryNotificationSenderRegistry implements NotificationSenderRegistry {
         return senders.stream()
                 .filter(sender -> sender.supports(request))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new UnsupportedChannelException(
                         "No se encontro sender compatible con channel: " + request.getChannel()));
     }
 }

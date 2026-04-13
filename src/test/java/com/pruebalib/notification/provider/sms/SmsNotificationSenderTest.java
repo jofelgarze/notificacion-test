@@ -125,8 +125,8 @@ class SmsNotificationSenderTest {
         assertFalse(result.isSuccessful());
         assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
         assertEquals(null, result.getProviderMessageId());
+        assertEquals("30007", result.getErrorCode());
         assertTrue(result.getDescription().contains("failed"));
-        assertTrue(result.getDescription().contains("30007"));
         assertTrue(result.getDescription().contains("Message filtered"));
     }
 

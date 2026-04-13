@@ -5,6 +5,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.pruebalib.notification.api.NotificationRequest;
+import com.pruebalib.notification.common.exception.UnsupportedChannelException;
 import com.pruebalib.notification.provider.gmail.GmailConfig;
 import com.pruebalib.notification.provider.gmail.GmailNotificationSender;
 import com.pruebalib.notification.provider.push.PushConfig;
@@ -89,7 +90,7 @@ class InMemoryNotificationSenderRegistryTest {
                                                 new PushConfig("project-demo", "token-demo",
                                                                 "https://api.push-provider.local"))));
 
-                assertThrows(IllegalArgumentException.class, () -> registry.resolve(new NotificationRequest(
+                assertThrows(UnsupportedChannelException.class, () -> registry.resolve(new NotificationRequest(
                                 "sms",
                                 "+593999999999",
                                 null,

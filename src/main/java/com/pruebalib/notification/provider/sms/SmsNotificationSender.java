@@ -4,6 +4,9 @@ import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+import com.pruebalib.notification.common.exception.NotificationDeliveryException;
+import com.pruebalib.notification.common.exception.NotificationValidationException;
 import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
@@ -42,10 +45,10 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
         requireRecipient(request);
         requireMessage(request);
         if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
-            throw new IllegalArgumentException("SmsNotificationSender solo soporta channel sms");
+            throw new NotificationValidationException("SmsNotificationSender solo soporta channel sms");
         }
         if (!RecipientFormatUtils.isPhone(request.getRecipient())) {
-            throw new IllegalArgumentException("El recipient debe ser un numero telefonico valido para SMS");
+            throw new NotificationValidationException("El recipient debe ser un numero telefonico valido para SMS");
         }
     }
 
@@ -57,6 +60,8 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
 
             if (response.isSuccessful()) {
                 return NotificationResult.success(
+                        channel(),
+                        provider(),
                         response.getProviderMessageId(),
                         "SMS enviado con estado " + response.getStatus()
                                 + " y " + response.getSegmentCount() + " segmento(s)");
@@ -64,14 +69,18 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
 
             String errorCode = response.getErrorCode() == null ? "unknown" : response.getErrorCode();
             String errorMessage = response.getErrorMessage() == null ? "Sin detalle" : response.getErrorMessage();
-            return NotificationResult.deliveryError(
+            return NotificationResult.failure(
+                    com.pruebalib.notification.api.NotificationResultType.DELIVERY_ERROR,
+                    channel(),
+                    provider(),
+                    errorCode,
                     "Error al enviar SMS. status=" + response.getStatus()
-                            + ", errorCode=" + errorCode
-                            + ", errorMessage=" + errorMessage);
+                            + ", errorMessage=" + errorMessage,
+                    response.getErrorMessage());
         } catch (IllegalArgumentException e) {
-            return NotificationResult.configurationError("Error en configuracion SMS: " + e.getMessage());
+            throw new NotificationConfigurationException("Error en configuracion SMS", e);
         } catch (RuntimeException e) {
-            return NotificationResult.deliveryError("Error al enviar SMS: " + e.getMessage());
+            throw new NotificationDeliveryException("Error al enviar SMS", e);
         }
     }
 }

@@ -4,6 +4,9 @@ import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+import com.pruebalib.notification.common.exception.NotificationDeliveryException;
+import com.pruebalib.notification.common.exception.NotificationValidationException;
 import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
@@ -42,10 +45,10 @@ public final class PushNotificationSender extends AbstractNotificationSender<Pus
         requireRecipient(request);
         requireMessage(request);
         if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
-            throw new IllegalArgumentException("PushNotificationSender solo soporta channel push");
+            throw new NotificationValidationException("PushNotificationSender solo soporta channel push");
         }
         if (!RecipientFormatUtils.isPushToken(request.getRecipient())) {
-            throw new IllegalArgumentException("El recipient debe ser un token valido para Push");
+            throw new NotificationValidationException("El recipient debe ser un token valido para Push");
         }
     }
 
@@ -57,18 +60,25 @@ public final class PushNotificationSender extends AbstractNotificationSender<Pus
 
             if (response.isAccepted()) {
                 return NotificationResult.success(
+                        channel(),
+                        provider(),
                         response.getProviderMessageId(),
                         "Push enviado con estado " + response.getStatus());
             }
 
             String errorMessage = response.getErrorMessage() == null ? "Sin detalle" : response.getErrorMessage();
-            return NotificationResult.deliveryError(
+            return NotificationResult.failure(
+                    com.pruebalib.notification.api.NotificationResultType.DELIVERY_ERROR,
+                    channel(),
+                    provider(),
+                    "PUSH_REJECTED",
                     "Error al enviar Push. status=" + response.getStatus()
-                            + ", errorMessage=" + errorMessage);
+                            + ", errorMessage=" + errorMessage,
+                    response.getErrorMessage());
         } catch (IllegalArgumentException e) {
-            return NotificationResult.configurationError("Error en configuracion Push: " + e.getMessage());
+            throw new NotificationConfigurationException("Error en configuracion Push", e);
         } catch (RuntimeException e) {
-            return NotificationResult.deliveryError("Error al enviar Push: " + e.getMessage());
+            throw new NotificationDeliveryException("Error al enviar Push", e);
         }
     }
 }

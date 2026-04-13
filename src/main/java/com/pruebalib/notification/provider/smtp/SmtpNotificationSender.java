@@ -4,6 +4,9 @@ import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+import com.pruebalib.notification.common.exception.NotificationDeliveryException;
+import com.pruebalib.notification.common.exception.NotificationValidationException;
 import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
@@ -42,10 +45,10 @@ public final class SmtpNotificationSender extends AbstractNotificationSender<Smt
         requireRecipient(request);
         requireMessage(request);
         if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
-            throw new IllegalArgumentException("SmtpNotificationSender solo soporta channel email");
+            throw new NotificationValidationException("SmtpNotificationSender solo soporta channel email");
         }
         if (!RecipientFormatUtils.isEmail(request.getRecipient())) {
-            throw new IllegalArgumentException("El recipient debe ser un email valido para SMTP");
+            throw new NotificationValidationException("El recipient debe ser un email valido para SMTP");
         }
     }
 
@@ -55,11 +58,11 @@ public final class SmtpNotificationSender extends AbstractNotificationSender<Smt
             SmtpPayload payload = mapper.map(request);
             SmtpAuthenticator authenticator = SmtpAuthenticator.from(getConfig());
             String providerMessageId = client.send(payload, authenticator, getConfig());
-            return NotificationResult.success(providerMessageId, "Correo enviado via SMTP");
+            return NotificationResult.success(channel(), provider(), providerMessageId, "Correo enviado via SMTP");
         } catch (IllegalArgumentException e) {
-            return NotificationResult.configurationError("Error en configuracion SMTP: " + e.getMessage());
+            throw new NotificationConfigurationException("Error en configuracion SMTP", e);
         } catch (RuntimeException e) {
-            return NotificationResult.deliveryError("Error al enviar correo SMTP: " + e.getMessage());
+            throw new NotificationDeliveryException("Error al enviar correo SMTP", e);
         }
     }
 }

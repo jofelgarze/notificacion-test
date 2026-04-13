@@ -7,9 +7,14 @@ import org.junit.jupiter.api.Test;
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.api.NotificationService;
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
 import com.pruebalib.notification.provider.sms.SmsConfig;
 import com.pruebalib.notification.provider.sms.SmsNotificationSender;
+import com.pruebalib.notification.provider.smtp.SmtpConfig;
+import com.pruebalib.notification.provider.smtp.SmtpNotificationSender;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NotificationServiceFactoryTest {
@@ -27,5 +32,27 @@ class NotificationServiceFactoryTest {
                 "Codigo"));
 
         assertTrue(result.isSuccessful());
+    }
+
+    @Test
+    void shouldCreateServiceUsingSenderVarargs() {
+        assertDoesNotThrow(() -> NotificationServiceFactory.create(
+                new SmsNotificationSender(
+                        new SmsConfig("acct-123", "token-xyz", "+15005550006", "https://api.sms-provider.local"))));
+    }
+
+    @Test
+    void shouldRejectEmptySenderList() {
+        assertThrows(NotificationConfigurationException.class,
+                () -> NotificationServiceFactory.create(List.of()));
+    }
+
+    @Test
+    void shouldRejectDuplicateChannels() {
+        assertThrows(NotificationConfigurationException.class, () -> NotificationServiceFactory.create(List.of(
+                new SmtpNotificationSender(
+                        new SmtpConfig("user1@example.com", "secret", null, "smtp.example.com", 587, true, false)),
+                new SmtpNotificationSender(
+                        new SmtpConfig("user2@example.com", "secret", null, "smtp2.example.com", 587, true, false)))));
     }
 }
