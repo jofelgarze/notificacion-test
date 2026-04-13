@@ -17,7 +17,7 @@ final class NotificationDispatchExecutor {
         this.eventPublisher = Objects.requireNonNull(eventPublisher, "eventPublisher no debe ser nulo");
     }
 
-    NotificationResult execute(NotificationRequest request, List<NotificationSender> candidates) {
+    NotificationResult execute(NotificationRequest request, List<NotificationSender> candidates, String trackerId) {
         Objects.requireNonNull(request, "request no debe ser nulo");
         Objects.requireNonNull(candidates, "candidates no debe ser nulo");
 
@@ -28,7 +28,7 @@ final class NotificationDispatchExecutor {
 
         NotificationResult lastResult = null;
         for (NotificationSender sender : candidates) {
-            NotificationResult result = executeWithSender(request, sender);
+            NotificationResult result = executeWithSender(request, sender, trackerId);
             if (result.isSuccessful()) {
                 return result;
             }
@@ -42,18 +42,21 @@ final class NotificationDispatchExecutor {
         return lastResult;
     }
 
-    private NotificationResult executeWithSender(NotificationRequest request, NotificationSender sender) {
-        eventPublisher.sendStarted(request, sender.provider());
+    private NotificationResult executeWithSender(
+            NotificationRequest request,
+            NotificationSender sender,
+            String trackerId) {
+        eventPublisher.sendStarted(request, sender.provider(), trackerId);
 
         NotificationResult result = sender.send(request);
         if (result.isSuccessful()) {
-            eventPublisher.sendSucceeded(request, result, sender.provider());
+            eventPublisher.sendSucceeded(request, result, sender.provider(), trackerId);
             return result;
         }
 
-        eventPublisher.sendFailed(request, result, sender.provider());
+        eventPublisher.sendFailed(request, result, sender.provider(), trackerId);
         if (result.getType() == NotificationResultType.VALIDATION_ERROR) {
-            eventPublisher.validationFailed(request, result, sender.provider());
+            eventPublisher.validationFailed(request, result, sender.provider(), trackerId);
         }
         return result;
     }

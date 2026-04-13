@@ -13,21 +13,21 @@ final class NotificationEventPublisher {
         this.listeners = listeners == null ? List.of() : List.copyOf(listeners);
     }
 
-    void validationFailed(NotificationRequest request, NotificationResult result, String provider) {
-        publish(NotificationEventType.VALIDATION_FAILED, request, result, provider, result.getDescription());
+    void validationFailed(NotificationRequest request, NotificationResult result, String provider, String trackerId) {
+        publish(NotificationEventType.VALIDATION_FAILED, request, result, provider, result.getDescription(), trackerId);
     }
 
-    void sendStarted(NotificationRequest request, String provider) {
+    void sendStarted(NotificationRequest request, String provider, String trackerId) {
         publish(NotificationEventType.SEND_STARTED, request, null, provider,
-                "Iniciando envio con provider " + provider);
+                "Iniciando envio con provider " + provider, trackerId);
     }
 
-    void sendSucceeded(NotificationRequest request, NotificationResult result, String provider) {
-        publish(NotificationEventType.SEND_SUCCEEDED, request, result, provider, result.getDescription());
+    void sendSucceeded(NotificationRequest request, NotificationResult result, String provider, String trackerId) {
+        publish(NotificationEventType.SEND_SUCCEEDED, request, result, provider, result.getDescription(), trackerId);
     }
 
-    void sendFailed(NotificationRequest request, NotificationResult result, String provider) {
-        publish(NotificationEventType.SEND_FAILED, request, result, provider, result.getDescription());
+    void sendFailed(NotificationRequest request, NotificationResult result, String provider, String trackerId) {
+        publish(NotificationEventType.SEND_FAILED, request, result, provider, result.getDescription(), trackerId);
     }
 
     private void publish(
@@ -35,8 +35,9 @@ final class NotificationEventPublisher {
             NotificationRequest request,
             NotificationResult result,
             String provider,
-            String message) {
-        NotificationEvent event = new NotificationEvent(type, request, result, provider, message);
+            String message,
+            String trackerId) {
+        NotificationEvent event = new NotificationEvent(type, request, result, provider, message, trackerId);
         for (NotificationListener listener : listeners) {
             listener.onEvent(event);
         }

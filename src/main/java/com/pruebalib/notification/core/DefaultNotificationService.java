@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.UUID;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
@@ -50,34 +51,35 @@ class DefaultNotificationService implements NotificationService {
 
     @Override
     public NotificationResult send(NotificationRequest request) {
+        String trackerId = nextTrackerId();
         if (request == null) {
             NotificationResult result = resultMapper.requestNull();
-            eventPublisher.validationFailed(null, result, null);
+            eventPublisher.validationFailed(null, result, null, trackerId);
             return result;
         }
 
         try {
             List<NotificationSender> candidates = routingPolicy.order(request, registry.resolveAll(request));
-            return dispatchExecutor.execute(request, candidates);
+            return dispatchExecutor.execute(request, candidates, trackerId);
         } catch (NotificationValidationException e) {
             NotificationResult result = resultMapper.validationError(request, e.getMessage());
-            eventPublisher.validationFailed(request, result, null);
+            eventPublisher.validationFailed(request, result, null, trackerId);
             return result;
         } catch (NotificationConfigurationException e) {
             NotificationResult result = resultMapper.configurationError(request, e.getMessage());
-            eventPublisher.sendFailed(request, result, null);
+            eventPublisher.sendFailed(request, result, null, trackerId);
             return result;
         } catch (UnsupportedChannelException e) {
             NotificationResult result = resultMapper.unsupportedChannel(request, e.getMessage());
-            eventPublisher.sendFailed(request, result, null);
+            eventPublisher.sendFailed(request, result, null, trackerId);
             return result;
         } catch (NotificationDeliveryException e) {
             NotificationResult result = resultMapper.deliveryError(request, e.getMessage());
-            eventPublisher.sendFailed(request, result, null);
+            eventPublisher.sendFailed(request, result, null, trackerId);
             return result;
         } catch (RuntimeException e) {
             NotificationResult result = resultMapper.unexpectedError(request, e.getMessage());
-            eventPublisher.sendFailed(request, result, null);
+            eventPublisher.sendFailed(request, result, null, trackerId);
             return result;
         }
     }
@@ -85,5 +87,9 @@ class DefaultNotificationService implements NotificationService {
     @Override
     public CompletableFuture<NotificationResult> sendAsync(NotificationRequest request) {
         return CompletableFuture.supplyAsync(() -> send(request), executor);
+    }
+
+    private String nextTrackerId() {
+        return UUID.randomUUID().toString();
     }
 }

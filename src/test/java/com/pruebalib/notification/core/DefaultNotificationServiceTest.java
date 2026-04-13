@@ -179,6 +179,8 @@ class DefaultNotificationServiceTest {
         assertEquals(2, events.size());
         assertEquals(NotificationEventType.SEND_STARTED, events.get(0).getType());
         assertEquals(NotificationEventType.SEND_SUCCEEDED, events.get(1).getType());
+        assertTrue(events.get(0).getTrackerId() != null && !events.get(0).getTrackerId().isBlank());
+        assertEquals(events.get(0).getTrackerId(), events.get(1).getTrackerId());
     }
 
     @Test
@@ -195,6 +197,7 @@ class DefaultNotificationServiceTest {
         assertEquals(NotificationResultType.VALIDATION_ERROR, result.getType());
         assertEquals(1, events.size());
         assertEquals(NotificationEventType.VALIDATION_FAILED, events.get(0).getType());
+        assertTrue(events.get(0).getTrackerId() != null && !events.get(0).getTrackerId().isBlank());
     }
 
     @Test
@@ -224,6 +227,7 @@ class DefaultNotificationServiceTest {
         assertEquals(2, events.size());
         assertEquals(NotificationEventType.SEND_STARTED, events.get(0).getType());
         assertEquals(NotificationEventType.SEND_FAILED, events.get(1).getType());
+        assertEquals(events.get(0).getTrackerId(), events.get(1).getTrackerId());
     }
 
     @Test
@@ -268,6 +272,9 @@ class DefaultNotificationServiceTest {
         assertEquals("smtp", events.get(2).getProvider());
         assertEquals(NotificationEventType.SEND_SUCCEEDED, events.get(3).getType());
         assertEquals("smtp", events.get(3).getProvider());
+        assertEquals(events.get(0).getTrackerId(), events.get(1).getTrackerId());
+        assertEquals(events.get(0).getTrackerId(), events.get(2).getTrackerId());
+        assertEquals(events.get(0).getTrackerId(), events.get(3).getTrackerId());
     }
 
     @Test

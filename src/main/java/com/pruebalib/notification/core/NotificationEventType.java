@@ -1,6 +1,6 @@
 package com.pruebalib.notification.core;
 
-enum NotificationEventType {
+public enum NotificationEventType {
     VALIDATION_FAILED,
     SEND_STARTED,
     SEND_SUCCEEDED,
