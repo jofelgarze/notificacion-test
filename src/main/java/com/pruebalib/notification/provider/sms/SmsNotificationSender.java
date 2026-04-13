@@ -64,14 +64,14 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
 
             String errorCode = response.getErrorCode() == null ? "unknown" : response.getErrorCode();
             String errorMessage = response.getErrorMessage() == null ? "Sin detalle" : response.getErrorMessage();
-            return NotificationResult.failure(
+            return NotificationResult.deliveryError(
                     "Error al enviar SMS. status=" + response.getStatus()
                             + ", errorCode=" + errorCode
                             + ", errorMessage=" + errorMessage);
         } catch (IllegalArgumentException e) {
-            return NotificationResult.failure("Error en configuracion SMS: " + e.getMessage());
+            return NotificationResult.configurationError("Error en configuracion SMS: " + e.getMessage());
         } catch (RuntimeException e) {
-            return NotificationResult.failure("Error al enviar SMS: " + e.getMessage());
+            return NotificationResult.deliveryError("Error al enviar SMS: " + e.getMessage());
         }
     }
 }

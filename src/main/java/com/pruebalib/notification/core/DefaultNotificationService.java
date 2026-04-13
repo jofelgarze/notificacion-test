@@ -22,9 +22,18 @@ class DefaultNotificationService implements NotificationService {
 
     @Override
     public NotificationResult send(NotificationRequest request) {
-        Objects.requireNonNull(request, "request no debe ser nulo");
-        NotificationSender sender = registry.resolve(request);
-        return sender.send(request);
+        if (request == null) {
+            return NotificationResult.validationError("request no debe ser nulo");
+        }
+
+        try {
+            NotificationSender sender = registry.resolve(request);
+            return sender.send(request);
+        } catch (IllegalArgumentException e) {
+            return NotificationResult.unsupportedChannel(e.getMessage());
+        } catch (RuntimeException e) {
+            return NotificationResult.deliveryError("Error inesperado al enviar notificacion: " + e.getMessage());
+        }
     }
 
     @Override

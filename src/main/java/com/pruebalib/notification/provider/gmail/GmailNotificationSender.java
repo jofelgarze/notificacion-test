@@ -57,9 +57,9 @@ public final class GmailNotificationSender extends AbstractNotificationSender<Gm
             String providerMessageId = client.send(payload, authenticator, getConfig());
             return NotificationResult.success(providerMessageId, "Correo enviado con Gmail");
         } catch (IllegalArgumentException e) {
-            return NotificationResult.failure("Error en configuracion de Gmail: " + e.getMessage());
+            return NotificationResult.configurationError("Error en configuracion de Gmail: " + e.getMessage());
         } catch (RuntimeException e) {
-            return NotificationResult.failure("Error al enviar correo Gmail: " + e.getMessage());
+            return NotificationResult.deliveryError("Error al enviar correo Gmail: " + e.getMessage());
         }
     }
 }

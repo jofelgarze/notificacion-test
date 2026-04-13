@@ -2,6 +2,7 @@ package com.pruebalib.notification.provider.smtp;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.api.NotificationResultType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +36,7 @@ class SmtpNotificationSenderTest {
         assertEquals("Prueba SMTP", client.capturedPayload.getSubject());
         assertEquals("Mensaje de prueba", client.capturedPayload.getBody());
         assertTrue(result.isSuccessful());
+        assertEquals(NotificationResultType.SUCCESS, result.getType());
         assertEquals("smtp-123", result.getProviderMessageId());
     }
 

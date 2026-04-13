@@ -62,13 +62,13 @@ public final class PushNotificationSender extends AbstractNotificationSender<Pus
             }
 
             String errorMessage = response.getErrorMessage() == null ? "Sin detalle" : response.getErrorMessage();
-            return NotificationResult.failure(
+            return NotificationResult.deliveryError(
                     "Error al enviar Push. status=" + response.getStatus()
                             + ", errorMessage=" + errorMessage);
         } catch (IllegalArgumentException e) {
-            return NotificationResult.failure("Error en configuracion Push: " + e.getMessage());
+            return NotificationResult.configurationError("Error en configuracion Push: " + e.getMessage());
         } catch (RuntimeException e) {
-            return NotificationResult.failure("Error al enviar Push: " + e.getMessage());
+            return NotificationResult.deliveryError("Error al enviar Push: " + e.getMessage());
         }
     }
 }

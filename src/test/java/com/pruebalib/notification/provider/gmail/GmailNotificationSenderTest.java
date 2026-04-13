@@ -2,6 +2,7 @@ package com.pruebalib.notification.provider.gmail;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.api.NotificationResultType;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,6 +39,7 @@ class GmailNotificationSenderTest {
                 assertEquals("Mensaje de prueba", client.capturedPayload.getBody());
                 assertNotNull(result);
                 assertTrue(result.isSuccessful());
+                assertEquals(NotificationResultType.SUCCESS, result.getType());
                 assertEquals("gmail-123", result.getProviderMessageId());
                 assertNotNull(result.getDescription());
         }

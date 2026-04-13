@@ -57,9 +57,9 @@ public final class SmtpNotificationSender extends AbstractNotificationSender<Smt
             String providerMessageId = client.send(payload, authenticator, getConfig());
             return NotificationResult.success(providerMessageId, "Correo enviado via SMTP");
         } catch (IllegalArgumentException e) {
-            return NotificationResult.failure("Error en configuracion SMTP: " + e.getMessage());
+            return NotificationResult.configurationError("Error en configuracion SMTP: " + e.getMessage());
         } catch (RuntimeException e) {
-            return NotificationResult.failure("Error al enviar correo SMTP: " + e.getMessage());
+            return NotificationResult.deliveryError("Error al enviar correo SMTP: " + e.getMessage());
         }
     }
 }

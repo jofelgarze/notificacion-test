@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.api.NotificationResultType;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -69,6 +70,7 @@ class SmsNotificationSenderTest {
         assertEquals("Mensaje corto", client.capturedPayload.getMessage());
         assertEquals("+15005550006", client.capturedPayload.getFrom());
         assertTrue(result.isSuccessful());
+        assertEquals(NotificationResultType.SUCCESS, result.getType());
         assertEquals("SM123456789", result.getProviderMessageId());
         assertTrue(result.getDescription().contains("queued"));
     }
@@ -94,6 +96,7 @@ class SmsNotificationSenderTest {
         NotificationResult result = sender.send(request);
 
         assertTrue(result.isSuccessful());
+        assertEquals(NotificationResultType.SUCCESS, result.getType());
         assertEquals("SMaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", result.getProviderMessageId());
         assertTrue(result.getDescription().contains("accepted"));
         assertTrue(result.getDescription().contains("2 segmento(s)"));
@@ -120,6 +123,7 @@ class SmsNotificationSenderTest {
         NotificationResult result = sender.send(request);
 
         assertFalse(result.isSuccessful());
+        assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
         assertEquals(null, result.getProviderMessageId());
         assertTrue(result.getDescription().contains("failed"));
         assertTrue(result.getDescription().contains("30007"));

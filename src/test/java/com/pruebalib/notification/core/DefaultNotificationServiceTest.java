@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.api.NotificationResultType;
 import com.pruebalib.notification.spi.NotificationSender;
 import com.pruebalib.notification.spi.NotificationSenderRegistry;
 
@@ -79,6 +80,41 @@ class DefaultNotificationServiceTest {
         assertSame(request, sender.capturedRequest);
     }
 
+    @Test
+    void shouldReturnValidationErrorWhenRequestIsNull() {
+        DefaultNotificationService service = new DefaultNotificationService(new CapturingRegistry(
+                new CapturingSender(NotificationResult.success("unused", "unused"))), Runnable::run);
+
+        NotificationResult result = service.send(null);
+
+        assertEquals(NotificationResultType.VALIDATION_ERROR, result.getType());
+        assertTrue(!result.isSuccessful());
+    }
+
+    @Test
+    void shouldReturnUnsupportedChannelWhenRegistryCannotResolve() {
+        DefaultNotificationService service = new DefaultNotificationService(
+                new ThrowingRegistry(new IllegalArgumentException("No se encontro sender compatible con channel: fax")),
+                Runnable::run);
+
+        NotificationResult result = service.send(new NotificationRequest("fax", "123", null, "hola"));
+
+        assertEquals(NotificationResultType.UNSUPPORTED_CHANNEL, result.getType());
+        assertTrue(!result.isSuccessful());
+    }
+
+    @Test
+    void shouldReturnDeliveryErrorForUnexpectedRuntimeException() {
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(new ThrowingSender(new RuntimeException("boom"))),
+                Runnable::run);
+
+        NotificationResult result = service.send(new NotificationRequest("sms", "+593999999999", null, "Codigo"));
+
+        assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
+        assertTrue(!result.isSuccessful());
+    }
+
     private static final class CapturingRegistry implements NotificationSenderRegistry {
         private final NotificationSender sender;
         private NotificationRequest capturedRequest;
@@ -139,6 +175,47 @@ class DefaultNotificationServiceTest {
         public void execute(Runnable command) {
             invocationCount++;
             command.run();
+        }
+    }
+
+    private static final class ThrowingRegistry implements NotificationSenderRegistry {
+        private final RuntimeException exception;
+
+        private ThrowingRegistry(RuntimeException exception) {
+            this.exception = exception;
+        }
+
+        @Override
+        public NotificationSender resolve(NotificationRequest request) {
+            throw exception;
+        }
+    }
+
+    private static final class ThrowingSender implements NotificationSender {
+        private final RuntimeException exception;
+
+        private ThrowingSender(RuntimeException exception) {
+            this.exception = exception;
+        }
+
+        @Override
+        public String channel() {
+            return "sms";
+        }
+
+        @Override
+        public String provider() {
+            return "sms";
+        }
+
+        @Override
+        public boolean supports(NotificationRequest request) {
+            return true;
+        }
+
+        @Override
+        public NotificationResult send(NotificationRequest request) {
+            throw exception;
         }
     }
 }

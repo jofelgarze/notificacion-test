@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.api.NotificationResultType;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -71,6 +72,7 @@ class PushNotificationSenderTest {
         assertEquals("Tienes un descuento disponible", client.capturedPayload.getBody());
         assertEquals(Map.of("campaign", "apr-2026", "screen", "offers"), client.capturedPayload.getData());
         assertTrue(result.isSuccessful());
+        assertEquals(NotificationResultType.SUCCESS, result.getType());
         assertEquals("push-abc-123", result.getProviderMessageId());
         assertTrue(result.getDescription().contains("accepted"));
     }
@@ -95,6 +97,7 @@ class PushNotificationSenderTest {
         NotificationResult result = sender.send(request);
 
         assertTrue(result.isSuccessful());
+        assertEquals(NotificationResultType.SUCCESS, result.getType());
         assertEquals("projects/demo/messages/0:1234567890", result.getProviderMessageId());
         assertTrue(result.getDescription().contains("queued"));
     }
@@ -119,6 +122,7 @@ class PushNotificationSenderTest {
         NotificationResult result = sender.send(request);
 
         assertFalse(result.isSuccessful());
+        assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
         assertEquals(null, result.getProviderMessageId());
         assertTrue(result.getDescription().contains("rejected"));
         assertTrue(result.getDescription().contains("Invalid device token"));
