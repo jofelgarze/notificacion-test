@@ -7,7 +7,7 @@ import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.spi.NotificationSender;
 import com.pruebalib.notification.spi.NotificationSenderRegistry;
 
-public class InMemoryNotificationSenderRegistry implements NotificationSenderRegistry {
+class InMemoryNotificationSenderRegistry implements NotificationSenderRegistry {
 
     private final List<NotificationSender> senders;
 

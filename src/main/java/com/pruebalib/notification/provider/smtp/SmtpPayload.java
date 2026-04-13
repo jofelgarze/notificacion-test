@@ -2,7 +2,7 @@ package com.pruebalib.notification.provider.smtp;
 
 import java.util.Objects;
 
-public final class SmtpPayload {
+final class SmtpPayload {
 
     private final String recipient;
     private final String subject;

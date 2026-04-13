@@ -3,7 +3,7 @@ package com.pruebalib.notification.provider.push;
 import java.util.Map;
 import java.util.Objects;
 
-public final class PushPayload {
+final class PushPayload {
 
     private final String recipient;
     private final String title;

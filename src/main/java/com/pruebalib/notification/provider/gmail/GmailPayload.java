@@ -2,7 +2,7 @@ package com.pruebalib.notification.provider.gmail;
 
 import java.util.Objects;
 
-public final class GmailPayload {
+final class GmailPayload {
 
     private final String recipient;
     private final String subject;

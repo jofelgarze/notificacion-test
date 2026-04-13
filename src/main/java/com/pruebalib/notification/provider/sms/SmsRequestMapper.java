@@ -2,7 +2,7 @@ package com.pruebalib.notification.provider.sms;
 
 import com.pruebalib.notification.api.NotificationRequest;
 
-public final class SmsRequestMapper {
+final class SmsRequestMapper {
 
     public SmsPayload map(NotificationRequest request, SmsConfig config) {
         if (config == null) {

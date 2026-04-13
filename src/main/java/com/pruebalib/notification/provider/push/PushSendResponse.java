@@ -1,6 +1,6 @@
 package com.pruebalib.notification.provider.push;
 
-public final class PushSendResponse {
+final class PushSendResponse {
 
     private final String providerMessageId;
     private final String status;

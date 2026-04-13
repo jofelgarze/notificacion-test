@@ -3,7 +3,7 @@ package com.pruebalib.notification.provider.sms;
 import java.time.Instant;
 import java.util.UUID;
 
-public class SmsClient {
+class SmsClient {
 
     public SmsSendResponse send(SmsPayload payload, SmsConfig config) {
         if (payload == null) {

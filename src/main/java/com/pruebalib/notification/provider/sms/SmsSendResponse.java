@@ -2,7 +2,7 @@ package com.pruebalib.notification.provider.sms;
 
 import java.time.Instant;
 
-public final class SmsSendResponse {
+final class SmsSendResponse {
 
     private final String providerMessageId;
     private final String status;

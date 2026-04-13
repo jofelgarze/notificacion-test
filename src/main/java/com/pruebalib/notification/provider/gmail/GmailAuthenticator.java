@@ -3,7 +3,7 @@ package com.pruebalib.notification.provider.gmail;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 
-public final class GmailAuthenticator {
+final class GmailAuthenticator {
 
     private final String username;
     private final String password;

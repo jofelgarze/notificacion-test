@@ -2,7 +2,7 @@ package com.pruebalib.notification.provider.push;
 
 import java.util.UUID;
 
-public class PushClient {
+class PushClient {
 
     public PushSendResponse send(PushPayload payload, PushConfig config) {
         if (payload == null) {

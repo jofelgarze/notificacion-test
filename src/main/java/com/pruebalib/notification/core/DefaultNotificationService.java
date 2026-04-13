@@ -10,7 +10,7 @@ import com.pruebalib.notification.api.NotificationService;
 import com.pruebalib.notification.spi.NotificationSender;
 import com.pruebalib.notification.spi.NotificationSenderRegistry;
 
-public class DefaultNotificationService implements NotificationService {
+class DefaultNotificationService implements NotificationService {
 
     private final NotificationSenderRegistry registry;
     private final Executor executor;

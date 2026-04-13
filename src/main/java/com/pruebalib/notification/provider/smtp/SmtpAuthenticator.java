@@ -3,7 +3,7 @@ package com.pruebalib.notification.provider.smtp;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 
-public final class SmtpAuthenticator {
+final class SmtpAuthenticator {
 
     private final String username;
     private final String password;
