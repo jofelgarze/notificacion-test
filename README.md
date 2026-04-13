@@ -2,6 +2,8 @@
 
 Libreria Java 21 para enviar notificaciones por `email`, `sms` y `push` usando una interfaz unificada, multiples proveedores por canal, eventos internos y soporte async con `CompletableFuture`.
 
+Consulta tambien el [resumen de pruebas](TESTS_OVERVIEW.md) para ver la suite agrupada por area, prioridad y logica de negocio cubierta.
+
 ## Requisitos
 
 - Java `21` o superior
@@ -351,3 +353,7 @@ Puedes revisar [NotificationLibraryDemo.java](/c:/Proyectos/estudios/autocapacit
 - suscripcion a eventos
 - uso sync y batch async
 - apertura y cierre correcto del `ExecutorService`
+
+## Navegacion adicional
+
+- [Resumen de pruebas](TESTS_OVERVIEW.md)
