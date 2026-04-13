@@ -58,6 +58,27 @@ class DefaultNotificationServiceTest {
         assertSame(request, sender.capturedRequest);
     }
 
+    @Test
+    void shouldUseSameClientFlowForUnifiedEmailChannel() {
+        NotificationRequest request = new NotificationRequest(
+                "email",
+                "dest@example.com",
+                "Asunto",
+                "Mensaje");
+        NotificationResult expected = NotificationResult.success("MAIL123", "sent");
+        CapturingSender sender = new CapturingSender("email", "gmail", expected);
+        CapturingRegistry registry = new CapturingRegistry(sender);
+        DefaultNotificationService service = new DefaultNotificationService(registry, Runnable::run);
+
+        NotificationResult result = service.send(request);
+
+        assertSame(expected, result);
+        assertEquals("email", sender.channel());
+        assertEquals("gmail", sender.provider());
+        assertSame(request, registry.capturedRequest);
+        assertSame(request, sender.capturedRequest);
+    }
+
     private static final class CapturingRegistry implements NotificationSenderRegistry {
         private final NotificationSender sender;
         private NotificationRequest capturedRequest;
@@ -74,21 +95,29 @@ class DefaultNotificationServiceTest {
     }
 
     private static final class CapturingSender implements NotificationSender {
+        private final String channel;
+        private final String provider;
         private final NotificationResult result;
         private NotificationRequest capturedRequest;
 
         private CapturingSender(NotificationResult result) {
+            this("sms", "sms", result);
+        }
+
+        private CapturingSender(String channel, String provider, NotificationResult result) {
+            this.channel = channel;
+            this.provider = provider;
             this.result = result;
         }
 
         @Override
         public String channel() {
-            return "sms";
+            return channel;
         }
 
         @Override
         public String provider() {
-            return "sms";
+            return provider;
         }
 
         @Override

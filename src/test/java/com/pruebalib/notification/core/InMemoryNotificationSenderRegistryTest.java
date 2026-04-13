@@ -6,10 +6,14 @@ import org.junit.jupiter.api.Test;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.provider.gmail.GmailConfig;
+import com.pruebalib.notification.provider.gmail.GmailNotificationSender;
 import com.pruebalib.notification.provider.push.PushConfig;
 import com.pruebalib.notification.provider.push.PushNotificationSender;
 import com.pruebalib.notification.provider.sms.SmsConfig;
 import com.pruebalib.notification.provider.sms.SmsNotificationSender;
+import com.pruebalib.notification.provider.smtp.SmtpConfig;
+import com.pruebalib.notification.provider.smtp.SmtpNotificationSender;
 import com.pruebalib.notification.spi.NotificationSender;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -55,6 +59,25 @@ class InMemoryNotificationSenderRegistryTest {
 
         assertInstanceOf(PushNotificationSender.class, resolved);
         assertSame(pushSender, resolved);
+    }
+
+    @Test
+    void shouldResolveFirstConfiguredEmailProviderUsingUnifiedChannel() {
+        NotificationSender gmailSender = new GmailNotificationSender(
+                new GmailConfig("user@gmail.com", "secret", null, null, 587, true, false));
+        NotificationSender smtpSender = new SmtpNotificationSender(
+                new SmtpConfig("user@example.com", "secret", null, "smtp.example.com", 587, true, false));
+
+        InMemoryNotificationSenderRegistry registry = new InMemoryNotificationSenderRegistry(
+                List.of(gmailSender, smtpSender));
+
+        NotificationSender resolved = registry.resolve(new NotificationRequest(
+                "email",
+                "dest@example.com",
+                "Asunto",
+                "Mensaje"));
+
+        assertSame(gmailSender, resolved);
     }
 
     @Test
