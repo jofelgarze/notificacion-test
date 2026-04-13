@@ -46,7 +46,16 @@ dependencies {
 
 ## Quick Start
 
-Ejemplo minimo con `email`, `sms` y `push`:
+### Ejecutar la demo con Docker
+
+Si no quieres instalar Java localmente, puedes compilar y ejecutar la demo en contenedor:
+
+```bash
+docker build -t notificacion-demo .
+docker run --rm notificacion-demo
+```
+
+Ejemplo minimo con `email`, `sms` y `push` del uso de la libreria:
 
 ```java
 import java.util.List;
