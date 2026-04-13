@@ -22,6 +22,7 @@ class DefaultNotificationService implements NotificationService {
     private final NotificationRoutingPolicy routingPolicy;
     private final NotificationEventPublisher eventPublisher;
     private final NotificationFailureResultMapper resultMapper;
+    private final NotificationDispatchExecutor dispatchExecutor;
 
     public DefaultNotificationService(NotificationSenderRegistry registry, Executor executor) {
         this(registry, executor, List.of(), new DefaultNotificationRoutingPolicy());
@@ -44,6 +45,7 @@ class DefaultNotificationService implements NotificationService {
         this.routingPolicy = Objects.requireNonNull(routingPolicy, "routingPolicy no debe ser nulo");
         this.eventPublisher = new NotificationEventPublisher(listeners);
         this.resultMapper = new NotificationFailureResultMapper();
+        this.dispatchExecutor = new NotificationDispatchExecutor(eventPublisher);
     }
 
     @Override
@@ -55,7 +57,8 @@ class DefaultNotificationService implements NotificationService {
         }
 
         try {
-            return sendWithResolvedCandidates(request);
+            List<NotificationSender> candidates = routingPolicy.order(request, registry.resolveAll(request));
+            return dispatchExecutor.execute(request, candidates);
         } catch (NotificationValidationException e) {
             NotificationResult result = resultMapper.validationError(request, e.getMessage());
             eventPublisher.validationFailed(request, result, null);
@@ -82,43 +85,5 @@ class DefaultNotificationService implements NotificationService {
     @Override
     public CompletableFuture<NotificationResult> sendAsync(NotificationRequest request) {
         return CompletableFuture.supplyAsync(() -> send(request), executor);
-    }
-
-    private NotificationResult sendWithResolvedCandidates(NotificationRequest request) {
-        List<NotificationSender> candidates = routingPolicy.order(request, registry.resolveAll(request));
-        if (candidates.isEmpty()) {
-            throw new UnsupportedChannelException(
-                    "No se encontro sender compatible con channel: " + request.getChannel());
-        }
-
-        NotificationResult lastResult = null;
-        for (NotificationSender sender : candidates) {
-            NotificationResult result = sendWithSender(request, sender);
-            if (result.isSuccessful()) {
-                return result;
-            }
-
-            lastResult = result;
-            if (result.getType() != com.pruebalib.notification.api.NotificationResultType.DELIVERY_ERROR) {
-                return result;
-            }
-        }
-
-        return lastResult;
-    }
-
-    private NotificationResult sendWithSender(NotificationRequest request, NotificationSender sender) {
-        eventPublisher.sendStarted(request, sender.provider());
-        NotificationResult result = sender.send(request);
-        if (result.isSuccessful()) {
-            eventPublisher.sendSucceeded(request, result, sender.provider());
-            return result;
-        }
-
-        eventPublisher.sendFailed(request, result, sender.provider());
-        if (result.getType() == com.pruebalib.notification.api.NotificationResultType.VALIDATION_ERROR) {
-            eventPublisher.validationFailed(request, result, sender.provider());
-        }
-        return result;
     }
 }
