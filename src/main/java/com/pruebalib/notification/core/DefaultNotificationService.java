@@ -1,5 +1,6 @@
 package com.pruebalib.notification.core;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -37,8 +38,26 @@ class DefaultNotificationService implements NotificationService {
         }
 
         try {
-            NotificationSender sender = registry.resolve(request);
-            return sender.send(request);
+            List<NotificationSender> candidates = registry.resolveAll(request);
+            if (candidates.isEmpty()) {
+                throw new UnsupportedChannelException(
+                        "No se encontro sender compatible con channel: " + request.getChannel());
+            }
+
+            NotificationResult lastResult = null;
+            for (NotificationSender sender : candidates) {
+                NotificationResult result = sender.send(request);
+                if (result.isSuccessful()) {
+                    return result;
+                }
+
+                lastResult = result;
+                if (result.getType() != com.pruebalib.notification.api.NotificationResultType.DELIVERY_ERROR) {
+                    return result;
+                }
+            }
+
+            return lastResult;
         } catch (NotificationValidationException e) {
             return NotificationResult.failure(
                     com.pruebalib.notification.api.NotificationResultType.VALIDATION_ERROR,

@@ -52,7 +52,7 @@ public final class NotificationServiceFactory {
         }
 
         List<NotificationSender> copy = List.copyOf(senders);
-        Set<String> usedChannels = new HashSet<>();
+        Set<String> usedSenderKeys = new HashSet<>();
         for (NotificationSender sender : copy) {
             requireSender(sender, "ningun sender debe ser nulo");
 
@@ -61,10 +61,16 @@ public final class NotificationServiceFactory {
                 throw new NotificationConfigurationException("channel del sender no debe estar vacio");
             }
 
-            String normalizedChannel = channel.toLowerCase();
-            if (!usedChannels.add(normalizedChannel)) {
+            String provider = requireText(sender.provider(), "provider del sender no debe ser nulo");
+            if (provider.isEmpty()) {
+                throw new NotificationConfigurationException("provider del sender no debe estar vacio");
+            }
+
+            String senderKey = channel.toLowerCase() + "::" + provider.toLowerCase();
+            if (!usedSenderKeys.add(senderKey)) {
                 throw new NotificationConfigurationException(
-                        "No se permiten NotificationSender duplicados para el channel: " + channel);
+                        "No se permiten NotificationSender duplicados para channel/provider: "
+                                + channel + "/" + provider);
             }
         }
 

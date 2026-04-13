@@ -8,6 +8,8 @@ import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.api.NotificationService;
 import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+import com.pruebalib.notification.provider.gmail.GmailConfig;
+import com.pruebalib.notification.provider.gmail.GmailNotificationSender;
 import com.pruebalib.notification.provider.sms.SmsConfig;
 import com.pruebalib.notification.provider.sms.SmsNotificationSender;
 import com.pruebalib.notification.provider.smtp.SmtpConfig;
@@ -48,7 +50,16 @@ class NotificationServiceFactoryTest {
     }
 
     @Test
-    void shouldRejectDuplicateChannels() {
+    void shouldAllowDifferentProvidersForSameChannel() {
+        assertDoesNotThrow(() -> NotificationServiceFactory.create(List.of(
+                new GmailNotificationSender(
+                        new GmailConfig("user1@gmail.com", "secret", null, null, 587, true, false)),
+                new SmtpNotificationSender(
+                        new SmtpConfig("user2@example.com", "secret", null, "smtp.example.com", 587, true, false)))));
+    }
+
+    @Test
+    void shouldRejectDuplicateChannelAndProvider() {
         assertThrows(NotificationConfigurationException.class, () -> NotificationServiceFactory.create(List.of(
                 new SmtpNotificationSender(
                         new SmtpConfig("user1@example.com", "secret", null, "smtp.example.com", 587, true, false)),

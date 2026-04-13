@@ -18,10 +18,16 @@ class InMemoryNotificationSenderRegistry implements NotificationSenderRegistry {
 
     @Override
     public NotificationSender resolve(NotificationRequest request) {
-        return senders.stream()
-                .filter(sender -> sender.supports(request))
+        return resolveAll(request).stream()
                 .findFirst()
                 .orElseThrow(() -> new UnsupportedChannelException(
                         "No se encontro sender compatible con channel: " + request.getChannel()));
+    }
+
+    @Override
+    public List<NotificationSender> resolveAll(NotificationRequest request) {
+        return senders.stream()
+                .filter(sender -> sender.supports(request))
+                .toList();
     }
 }

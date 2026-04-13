@@ -3,6 +3,8 @@ package com.pruebalib.notification.provider.gmail;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+
 final class GmailAuthenticator {
 
     private final String username;
@@ -15,20 +17,20 @@ final class GmailAuthenticator {
 
     public static GmailAuthenticator from(GmailConfig config) {
         if (config == null) {
-            throw new IllegalArgumentException("GmailConfig no puede ser nulo");
+            throw new NotificationConfigurationException("GmailConfig no puede ser nulo");
         }
         if (config.username() == null || config.username().isBlank()) {
-            throw new IllegalArgumentException("El usuario de Gmail no puede estar vacío");
+            throw new NotificationConfigurationException("El usuario de Gmail no puede estar vacio");
         }
         if (config.password() == null || config.password().isBlank()) {
-            throw new IllegalArgumentException("La contraseña de Gmail no puede estar vacía");
+            throw new NotificationConfigurationException("La contrasena de Gmail no puede estar vacia");
         }
         return new GmailAuthenticator(config.username(), config.password());
     }
 
     public void validate() {
         if (username.isBlank() || password.isBlank()) {
-            throw new IllegalStateException("Credenciales de Gmail inválidas");
+            throw new NotificationConfigurationException("Credenciales de Gmail invalidas");
         }
     }
 

@@ -11,17 +11,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.UUID;
 
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+import com.pruebalib.notification.common.exception.NotificationDeliveryException;
+
 class GmailClient {
 
     public String send(GmailPayload payload, GmailAuthenticator authenticator, GmailConfig config) {
         if (payload == null) {
-            throw new IllegalArgumentException("GmailPayload no puede ser nulo");
+            throw new NotificationConfigurationException("GmailPayload no puede ser nulo");
         }
         if (authenticator == null) {
-            throw new IllegalArgumentException("GmailAuthenticator no puede ser nulo");
+            throw new NotificationConfigurationException("GmailAuthenticator no puede ser nulo");
         }
         if (config == null) {
-            throw new IllegalArgumentException("GmailConfig no puede ser nulo");
+            throw new NotificationConfigurationException("GmailConfig no puede ser nulo");
         }
 
         authenticator.validate();
@@ -52,7 +55,7 @@ class GmailClient {
                     ? messageIdHeader[0]
                     : "gmail-" + UUID.randomUUID();
         } catch (MessagingException e) {
-            throw new RuntimeException("No se pudo enviar el correo Gmail", e);
+            throw new NotificationDeliveryException("No se pudo enviar el correo Gmail", e);
         }
     }
 }

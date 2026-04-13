@@ -77,8 +77,6 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
                     "Error al enviar SMS. status=" + response.getStatus()
                             + ", errorMessage=" + errorMessage,
                     response.getErrorMessage());
-        } catch (IllegalArgumentException e) {
-            throw new NotificationConfigurationException("Error en configuracion SMS", e);
         } catch (RuntimeException e) {
             throw new NotificationDeliveryException("Error al enviar SMS", e);
         }

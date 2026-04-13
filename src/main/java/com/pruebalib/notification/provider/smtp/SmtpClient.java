@@ -11,17 +11,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.UUID;
 
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+import com.pruebalib.notification.common.exception.NotificationDeliveryException;
+
 class SmtpClient {
 
     public String send(SmtpPayload payload, SmtpAuthenticator authenticator, SmtpConfig config) {
         if (payload == null) {
-            throw new IllegalArgumentException("SmtpPayload no puede ser nulo");
+            throw new NotificationConfigurationException("SmtpPayload no puede ser nulo");
         }
         if (authenticator == null) {
-            throw new IllegalArgumentException("SmtpAuthenticator no puede ser nulo");
+            throw new NotificationConfigurationException("SmtpAuthenticator no puede ser nulo");
         }
         if (config == null) {
-            throw new IllegalArgumentException("SmtpConfig no puede ser nulo");
+            throw new NotificationConfigurationException("SmtpConfig no puede ser nulo");
         }
 
         authenticator.validate();
@@ -52,7 +55,7 @@ class SmtpClient {
                     ? messageIdHeader[0]
                     : "smtp-" + UUID.randomUUID();
         } catch (MessagingException e) {
-            throw new RuntimeException("No se pudo enviar el correo SMTP", e);
+            throw new NotificationDeliveryException("No se pudo enviar el correo SMTP", e);
         }
     }
 }

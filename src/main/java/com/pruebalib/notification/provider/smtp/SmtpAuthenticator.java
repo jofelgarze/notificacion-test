@@ -3,6 +3,8 @@ package com.pruebalib.notification.provider.smtp;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+
 final class SmtpAuthenticator {
 
     private final String username;
@@ -15,20 +17,20 @@ final class SmtpAuthenticator {
 
     public static SmtpAuthenticator from(SmtpConfig config) {
         if (config == null) {
-            throw new IllegalArgumentException("SmtpConfig no puede ser nulo");
+            throw new NotificationConfigurationException("SmtpConfig no puede ser nulo");
         }
         if (config.username() == null || config.username().isBlank()) {
-            throw new IllegalArgumentException("El usuario SMTP no puede estar vacío");
+            throw new NotificationConfigurationException("El usuario SMTP no puede estar vacio");
         }
         if (config.password() == null || config.password().isBlank()) {
-            throw new IllegalArgumentException("La contraseña SMTP no puede estar vacía");
+            throw new NotificationConfigurationException("La contrasena SMTP no puede estar vacia");
         }
         return new SmtpAuthenticator(config.username(), config.password());
     }
 
     public void validate() {
         if (username.isBlank() || password.isBlank()) {
-            throw new IllegalStateException("Credenciales SMTP inválidas");
+            throw new NotificationConfigurationException("Credenciales SMTP invalidas");
         }
     }
 

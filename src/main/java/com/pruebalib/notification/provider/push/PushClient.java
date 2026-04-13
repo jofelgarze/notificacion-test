@@ -2,14 +2,16 @@ package com.pruebalib.notification.provider.push;
 
 import java.util.UUID;
 
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+
 class PushClient {
 
     public PushSendResponse send(PushPayload payload, PushConfig config) {
         if (payload == null) {
-            throw new IllegalArgumentException("PushPayload no puede ser nulo");
+            throw new NotificationConfigurationException("PushPayload no puede ser nulo");
         }
         if (config == null) {
-            throw new IllegalArgumentException("PushConfig no puede ser nulo");
+            throw new NotificationConfigurationException("PushConfig no puede ser nulo");
         }
 
         return new PushSendResponse(

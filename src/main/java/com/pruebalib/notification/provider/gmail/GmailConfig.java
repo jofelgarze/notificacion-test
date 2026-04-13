@@ -1,5 +1,6 @@
 package com.pruebalib.notification.provider.gmail;
 
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
 import com.pruebalib.notification.spi.NotificationSenderConfig;
 
 public final class GmailConfig implements NotificationSenderConfig {
@@ -31,7 +32,7 @@ public final class GmailConfig implements NotificationSenderConfig {
 
     private static String requireText(String value, String message) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(message);
+            throw new NotificationConfigurationException(message);
         }
         return value;
     }

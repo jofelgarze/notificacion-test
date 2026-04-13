@@ -3,14 +3,16 @@ package com.pruebalib.notification.provider.sms;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+
 class SmsClient {
 
     public SmsSendResponse send(SmsPayload payload, SmsConfig config) {
         if (payload == null) {
-            throw new IllegalArgumentException("SmsPayload no puede ser nulo");
+            throw new NotificationConfigurationException("SmsPayload no puede ser nulo");
         }
         if (config == null) {
-            throw new IllegalArgumentException("SmsConfig no puede ser nulo");
+            throw new NotificationConfigurationException("SmsConfig no puede ser nulo");
         }
 
         return new SmsSendResponse(

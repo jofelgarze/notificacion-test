@@ -9,7 +9,6 @@ import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.api.NotificationResultType;
 import com.pruebalib.notification.common.exception.NotificationConfigurationException;
-import com.pruebalib.notification.common.exception.NotificationDeliveryException;
 import com.pruebalib.notification.common.exception.NotificationValidationException;
 import com.pruebalib.notification.common.exception.UnsupportedChannelException;
 import com.pruebalib.notification.spi.NotificationSender;
@@ -100,7 +99,8 @@ class DefaultNotificationServiceTest {
     @Test
     void shouldReturnUnsupportedChannelWhenRegistryCannotResolve() {
         DefaultNotificationService service = new DefaultNotificationService(
-                new ThrowingRegistry(new UnsupportedChannelException("No se encontro sender compatible con channel: fax")),
+                new ThrowingRegistry(
+                        new UnsupportedChannelException("No se encontro sender compatible con channel: fax")),
                 Runnable::run);
 
         NotificationResult result = service.send(new NotificationRequest("fax", "123", null, "hola"));
@@ -146,6 +146,73 @@ class DefaultNotificationServiceTest {
                 () -> service.sendOrThrow(new NotificationRequest("sms", "+593999999999", null, "Codigo")));
     }
 
+    @Test
+    void shouldFallbackToSecondProviderWhenFirstReturnsDeliveryError() {
+        NotificationRequest request = new NotificationRequest(
+                "email",
+                "dest@example.com",
+                "Asunto",
+                "Mensaje");
+
+        NotificationSender first = new CapturingSender(
+                "email",
+                "gmail",
+                NotificationResult.failure(
+                        NotificationResultType.DELIVERY_ERROR,
+                        "email",
+                        "gmail",
+                        "DELIVERY_ERROR",
+                        "gmail failed",
+                        "gmail failed"));
+        NotificationSender second = new CapturingSender(
+                "email",
+                "smtp",
+                NotificationResult.success("email", "smtp", "smtp-123", "sent"));
+
+        DefaultNotificationService service = new DefaultNotificationService(
+                new MultiSenderRegistry(first, second),
+                Runnable::run);
+
+        NotificationResult result = service.send(request);
+
+        assertTrue(result.isSuccessful());
+        assertEquals("smtp", result.getProvider());
+        assertEquals("smtp-123", result.getProviderMessageId());
+    }
+
+    @Test
+    void shouldNotFallbackWhenFirstReturnsValidationError() {
+        NotificationRequest request = new NotificationRequest(
+                "email",
+                "dest@example.com",
+                "Asunto",
+                "Mensaje");
+
+        NotificationSender first = new CapturingSender(
+                "email",
+                "gmail",
+                NotificationResult.failure(
+                        NotificationResultType.VALIDATION_ERROR,
+                        "email",
+                        "gmail",
+                        "VALIDATION_ERROR",
+                        "invalid request",
+                        "invalid request"));
+        NotificationSender second = new CapturingSender(
+                "email",
+                "smtp",
+                NotificationResult.success("email", "smtp", "smtp-123", "sent"));
+
+        DefaultNotificationService service = new DefaultNotificationService(
+                new MultiSenderRegistry(first, second),
+                Runnable::run);
+
+        NotificationResult result = service.send(request);
+
+        assertEquals(NotificationResultType.VALIDATION_ERROR, result.getType());
+        assertEquals("gmail", result.getProvider());
+    }
+
     private static final class CapturingRegistry implements NotificationSenderRegistry {
         private final NotificationSender sender;
         private NotificationRequest capturedRequest;
@@ -158,6 +225,12 @@ class DefaultNotificationServiceTest {
         public NotificationSender resolve(NotificationRequest request) {
             this.capturedRequest = request;
             return sender;
+        }
+
+        @Override
+        public java.util.List<NotificationSender> resolveAll(NotificationRequest request) {
+            this.capturedRequest = request;
+            return java.util.List.of(sender);
         }
     }
 
@@ -219,6 +292,29 @@ class DefaultNotificationServiceTest {
         @Override
         public NotificationSender resolve(NotificationRequest request) {
             throw exception;
+        }
+
+        @Override
+        public java.util.List<NotificationSender> resolveAll(NotificationRequest request) {
+            throw exception;
+        }
+    }
+
+    private static final class MultiSenderRegistry implements NotificationSenderRegistry {
+        private final java.util.List<NotificationSender> senders;
+
+        private MultiSenderRegistry(NotificationSender... senders) {
+            this.senders = java.util.List.of(senders);
+        }
+
+        @Override
+        public NotificationSender resolve(NotificationRequest request) {
+            return senders.getFirst();
+        }
+
+        @Override
+        public java.util.List<NotificationSender> resolveAll(NotificationRequest request) {
+            return senders;
         }
     }
 

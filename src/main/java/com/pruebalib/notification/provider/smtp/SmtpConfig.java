@@ -1,5 +1,6 @@
 package com.pruebalib.notification.provider.smtp;
 
+import com.pruebalib.notification.common.exception.NotificationConfigurationException;
 import com.pruebalib.notification.spi.NotificationSenderConfig;
 
 public final class SmtpConfig implements NotificationSenderConfig {
@@ -31,14 +32,14 @@ public final class SmtpConfig implements NotificationSenderConfig {
 
     private static String requireText(String value, String message) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(message);
+            throw new NotificationConfigurationException(message);
         }
         return value;
     }
 
     private static int requirePositivePort(int value) {
         if (value <= 0) {
-            throw new IllegalArgumentException("El puerto SMTP debe ser un numero valido");
+            throw new NotificationConfigurationException("El puerto SMTP debe ser un numero valido");
         }
         return value;
     }

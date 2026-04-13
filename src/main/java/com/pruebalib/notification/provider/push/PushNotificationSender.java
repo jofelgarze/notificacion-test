@@ -75,8 +75,6 @@ public final class PushNotificationSender extends AbstractNotificationSender<Pus
                     "Error al enviar Push. status=" + response.getStatus()
                             + ", errorMessage=" + errorMessage,
                     response.getErrorMessage());
-        } catch (IllegalArgumentException e) {
-            throw new NotificationConfigurationException("Error en configuracion Push", e);
         } catch (RuntimeException e) {
             throw new NotificationDeliveryException("Error al enviar Push", e);
         }
