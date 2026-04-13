@@ -6,11 +6,11 @@ import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
-public final class SmsNotificationSender extends AbstractNotificationSender {
+public final class SmsNotificationSender extends AbstractNotificationSender<SmsConfig> {
 
-    private static final String TARGET = "sms";
+    private static final String CHANNEL = "sms";
+    private static final String PROVIDER = "sms";
 
-    private final SmsConfig config;
     private final SmsRequestMapper mapper;
     private final SmsClient client;
 
@@ -19,24 +19,34 @@ public final class SmsNotificationSender extends AbstractNotificationSender {
     }
 
     public SmsNotificationSender(SmsConfig config, SmsRequestMapper mapper, SmsClient client) {
-        this.config = Objects.requireNonNull(config, "SmsConfig no debe ser nulo");
+        super(config);
         this.mapper = Objects.requireNonNull(mapper, "SmsRequestMapper no debe ser nulo");
         this.client = Objects.requireNonNull(client, "SmsClient no debe ser nulo");
     }
 
     @Override
-    public boolean supports(NotificationRequest request) {
-        if (request == null || request.getTarget() == null) {
-            return false;
-        }
-        return TARGET.equalsIgnoreCase(request.getTarget());
+    public String channel() {
+        return CHANNEL;
+    }
+
+    @Override
+    public String provider() {
+        return PROVIDER;
+    }
+
+    @Override
+    protected void validateRequest(NotificationRequest request) {
+        Objects.requireNonNull(request, "el objeto request no debe ser nulo");
+        Objects.requireNonNull(request.getChannel(), "channel no debe ser nulo");
+        Objects.requireNonNull(request.getRecipient(), "recipient no debe ser nulo");
+        Objects.requireNonNull(request.getMessage(), "el mensaje no debe ser nulo");
     }
 
     @Override
     protected NotificationResult doSend(NotificationRequest request) {
         try {
-            SmsPayload payload = mapper.map(request, config);
-            SmsSendResponse response = client.send(payload, config);
+            SmsPayload payload = mapper.map(request, getConfig());
+            SmsSendResponse response = client.send(payload, getConfig());
 
             if (response.isSuccessful()) {
                 return NotificationResult.success(

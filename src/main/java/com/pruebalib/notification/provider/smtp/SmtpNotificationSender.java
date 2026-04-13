@@ -6,11 +6,11 @@ import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
-public final class SmtpNotificationSender extends AbstractNotificationSender {
+public final class SmtpNotificationSender extends AbstractNotificationSender<SmtpConfig> {
 
-    private static final String TARGET = "smtp";
+    private static final String CHANNEL = "email";
+    private static final String PROVIDER = "smtp";
 
-    private final SmtpConfig config;
     private final SmtpRequestMapper mapper;
     private final SmtpClient client;
 
@@ -19,25 +19,35 @@ public final class SmtpNotificationSender extends AbstractNotificationSender {
     }
 
     public SmtpNotificationSender(SmtpConfig config, SmtpRequestMapper mapper, SmtpClient client) {
-        this.config = Objects.requireNonNull(config, "SmtpConfig no debe ser nulo");
+        super(config);
         this.mapper = Objects.requireNonNull(mapper, "SmtpRequestMapper no debe ser nulo");
         this.client = Objects.requireNonNull(client, "SmtpClient no debe ser nulo");
     }
 
     @Override
-    public boolean supports(NotificationRequest request) {
-        if (request == null || request.getTarget() == null) {
-            return false;
-        }
-        return TARGET.equalsIgnoreCase(request.getTarget());
+    public String channel() {
+        return CHANNEL;
+    }
+
+    @Override
+    public String provider() {
+        return PROVIDER;
+    }
+
+    @Override
+    protected void validateRequest(NotificationRequest request) {
+        Objects.requireNonNull(request, "el objeto request no debe ser nulo");
+        Objects.requireNonNull(request.getChannel(), "channel no debe ser nulo");
+        Objects.requireNonNull(request.getRecipient(), "recipient no debe ser nulo");
+        Objects.requireNonNull(request.getMessage(), "el mensaje no debe ser nulo");
     }
 
     @Override
     protected NotificationResult doSend(NotificationRequest request) {
         try {
             SmtpPayload payload = mapper.map(request);
-            SmtpAuthenticator authenticator = SmtpAuthenticator.from(config);
-            String providerMessageId = client.send(payload, authenticator, config);
+            SmtpAuthenticator authenticator = SmtpAuthenticator.from(getConfig());
+            String providerMessageId = client.send(payload, authenticator, getConfig());
             return NotificationResult.success(providerMessageId, "Correo enviado via SMTP");
         } catch (IllegalArgumentException e) {
             return NotificationResult.failure("Error en configuracion SMTP: " + e.getMessage());

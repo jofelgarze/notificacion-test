@@ -1,6 +1,8 @@
 package com.pruebalib.notification.provider.smtp;
 
-public final class SmtpConfig {
+import com.pruebalib.notification.spi.NotificationSenderConfig;
+
+public final class SmtpConfig implements NotificationSenderConfig {
 
     private final String username;
     private final String password;

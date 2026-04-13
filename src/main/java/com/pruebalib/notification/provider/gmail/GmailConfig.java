@@ -1,6 +1,8 @@
 package com.pruebalib.notification.provider.gmail;
 
-public final class GmailConfig {
+import com.pruebalib.notification.spi.NotificationSenderConfig;
+
+public final class GmailConfig implements NotificationSenderConfig {
 
     private final String username;
     private final String password;

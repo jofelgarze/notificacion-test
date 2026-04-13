@@ -1,6 +1,8 @@
 package com.pruebalib.notification.provider.sms;
 
-public final class SmsConfig {
+import com.pruebalib.notification.spi.NotificationSenderConfig;
+
+public final class SmsConfig implements NotificationSenderConfig {
 
     private final String accountId;
     private final String authToken;

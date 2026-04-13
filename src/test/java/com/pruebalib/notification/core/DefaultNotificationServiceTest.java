@@ -82,6 +82,16 @@ class DefaultNotificationServiceTest {
         }
 
         @Override
+        public String channel() {
+            return "sms";
+        }
+
+        @Override
+        public String provider() {
+            return "sms";
+        }
+
+        @Override
         public boolean supports(NotificationRequest request) {
             return true;
         }

@@ -1,6 +1,8 @@
 package com.pruebalib.notification.provider.push;
 
-public final class PushConfig {
+import com.pruebalib.notification.spi.NotificationSenderConfig;
+
+public final class PushConfig implements NotificationSenderConfig {
 
     private final String projectId;
     private final String apiToken;

@@ -11,7 +11,7 @@ class SmtpNotificationSenderTest {
     @Test
     void shouldSupportSmtpRequests() {
         NotificationRequest request = new NotificationRequest(
-                "smtp",
+                "email",
                 "dest@example.com",
                 "Prueba SMTP",
                 "Mensaje de prueba");
@@ -25,9 +25,9 @@ class SmtpNotificationSenderTest {
     @Test
     void shouldNotSupportNonSmtpRequests() {
         NotificationRequest request = new NotificationRequest(
-                "gmail",
-                "dest@example.com",
-                "Prueba Gmail",
+                "sms",
+                "+593999999999",
+                null,
                 "Mensaje de prueba");
 
         SmtpNotificationSender sender = new SmtpNotificationSender(
