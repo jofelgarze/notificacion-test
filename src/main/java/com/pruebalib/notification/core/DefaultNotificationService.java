@@ -20,18 +20,28 @@ class DefaultNotificationService implements NotificationService {
     private final NotificationSenderRegistry registry;
     private final Executor executor;
     private final List<NotificationListener> listeners;
+    private final NotificationRoutingPolicy routingPolicy;
 
     public DefaultNotificationService(NotificationSenderRegistry registry, Executor executor) {
-        this(registry, executor, List.of());
+        this(registry, executor, List.of(), new DefaultNotificationRoutingPolicy());
     }
 
     public DefaultNotificationService(
             NotificationSenderRegistry registry,
             Executor executor,
             List<NotificationListener> listeners) {
+        this(registry, executor, listeners, new DefaultNotificationRoutingPolicy());
+    }
+
+    public DefaultNotificationService(
+            NotificationSenderRegistry registry,
+            Executor executor,
+            List<NotificationListener> listeners,
+            NotificationRoutingPolicy routingPolicy) {
         this.registry = Objects.requireNonNull(registry, "NotificationSenderRegistry no debe ser nulo");
         this.executor = Objects.requireNonNull(executor, "excecutor no debe ser nulo");
         this.listeners = listeners == null ? List.of() : List.copyOf(listeners);
+        this.routingPolicy = Objects.requireNonNull(routingPolicy, "routingPolicy no debe ser nulo");
     }
 
     @Override
@@ -49,7 +59,7 @@ class DefaultNotificationService implements NotificationService {
         }
 
         try {
-            List<NotificationSender> candidates = registry.resolveAll(request);
+            List<NotificationSender> candidates = routingPolicy.order(request, registry.resolveAll(request));
             if (candidates.isEmpty()) {
                 throw new UnsupportedChannelException(
                         "No se encontro sender compatible con channel: " + request.getChannel());

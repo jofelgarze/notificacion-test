@@ -292,6 +292,39 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    void shouldUseCustomRoutingPolicyOrder() {
+        NotificationRequest request = new NotificationRequest(
+                "email",
+                "dest@example.com",
+                "Asunto",
+                "Mensaje");
+
+        NotificationSender first = new CapturingSender(
+                "email",
+                "gmail",
+                NotificationResult.success("email", "gmail", "gmail-123", "sent"));
+        NotificationSender second = new CapturingSender(
+                "email",
+                "smtp",
+                NotificationResult.success("email", "smtp", "smtp-123", "sent"));
+
+        NotificationRoutingPolicy reversePolicy = (ignoredRequest, candidates) -> List.of(candidates.get(1),
+                candidates.get(0));
+
+        DefaultNotificationService service = new DefaultNotificationService(
+                new MultiSenderRegistry(first, second),
+                Runnable::run,
+                List.of(),
+                reversePolicy);
+
+        NotificationResult result = service.send(request);
+
+        assertTrue(result.isSuccessful());
+        assertEquals("smtp", result.getProvider());
+        assertEquals("smtp-123", result.getProviderMessageId());
+    }
+
+    @Test
     void shouldNotFallbackWhenFirstReturnsValidationError() {
         NotificationRequest request = new NotificationRequest(
                 "email",

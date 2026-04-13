@@ -66,4 +66,16 @@ class NotificationServiceFactoryTest {
                 new SmtpNotificationSender(
                         new SmtpConfig("user2@example.com", "secret", null, "smtp2.example.com", 587, true, false)))));
     }
+
+    @Test
+    void shouldRejectNullRoutingPolicy() {
+        assertThrows(NotificationConfigurationException.class,
+                () -> NotificationServiceFactory.create(
+                        List.of(new SmsNotificationSender(
+                                new SmsConfig("acct-123", "token-xyz", "+15005550006",
+                                        "https://api.sms-provider.local"))),
+                        Runnable::run,
+                        List.of(),
+                        null));
+    }
 }

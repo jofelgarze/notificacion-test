@@ -19,18 +19,27 @@ public final class NotificationServiceFactory {
     }
 
     public static NotificationService create(List<NotificationSender> senders, Executor executor) {
-        return create(senders, executor, List.of());
+        return create(senders, executor, List.of(), new DefaultNotificationRoutingPolicy());
     }
 
     public static NotificationService create(
             List<NotificationSender> senders,
             Executor executor,
             List<NotificationListener> listeners) {
+        return create(senders, executor, listeners, new DefaultNotificationRoutingPolicy());
+    }
+
+    public static NotificationService create(
+            List<NotificationSender> senders,
+            Executor executor,
+            List<NotificationListener> listeners,
+            NotificationRoutingPolicy routingPolicy) {
         List<NotificationSender> validatedSenders = validateSenders(senders);
         Executor validatedExecutor = requireExecutor(executor);
+        NotificationRoutingPolicy validatedRoutingPolicy = requireRoutingPolicy(routingPolicy);
 
         NotificationSenderRegistry registry = new InMemoryNotificationSenderRegistry(validatedSenders);
-        return new DefaultNotificationService(registry, validatedExecutor, listeners);
+        return new DefaultNotificationService(registry, validatedExecutor, listeners, validatedRoutingPolicy);
     }
 
     public static NotificationService create(List<NotificationSender> senders) {
@@ -93,6 +102,13 @@ public final class NotificationServiceFactory {
             throw new NotificationConfigurationException("executor no debe ser nulo");
         }
         return executor;
+    }
+
+    private static NotificationRoutingPolicy requireRoutingPolicy(NotificationRoutingPolicy routingPolicy) {
+        if (routingPolicy == null) {
+            throw new NotificationConfigurationException("routingPolicy no debe ser nulo");
+        }
+        return routingPolicy;
     }
 
     private static NotificationSender requireSender(NotificationSender sender, String message) {
