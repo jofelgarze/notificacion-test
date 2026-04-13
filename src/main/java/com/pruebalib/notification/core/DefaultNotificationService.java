@@ -19,8 +19,9 @@ class DefaultNotificationService implements NotificationService {
 
     private final NotificationSenderRegistry registry;
     private final Executor executor;
-    private final List<NotificationListener> listeners;
     private final NotificationRoutingPolicy routingPolicy;
+    private final NotificationEventPublisher eventPublisher;
+    private final NotificationFailureResultMapper resultMapper;
 
     public DefaultNotificationService(NotificationSenderRegistry registry, Executor executor) {
         this(registry, executor, List.of(), new DefaultNotificationRoutingPolicy());
@@ -40,103 +41,40 @@ class DefaultNotificationService implements NotificationService {
             NotificationRoutingPolicy routingPolicy) {
         this.registry = Objects.requireNonNull(registry, "NotificationSenderRegistry no debe ser nulo");
         this.executor = Objects.requireNonNull(executor, "excecutor no debe ser nulo");
-        this.listeners = listeners == null ? List.of() : List.copyOf(listeners);
         this.routingPolicy = Objects.requireNonNull(routingPolicy, "routingPolicy no debe ser nulo");
+        this.eventPublisher = new NotificationEventPublisher(listeners);
+        this.resultMapper = new NotificationFailureResultMapper();
     }
 
     @Override
     public NotificationResult send(NotificationRequest request) {
         if (request == null) {
-            NotificationResult result = NotificationResult.failure(
-                    com.pruebalib.notification.api.NotificationResultType.VALIDATION_ERROR,
-                    null,
-                    null,
-                    "REQUEST_NULL",
-                    "La notificacion es invalida",
-                    "request no debe ser nulo");
-            publish(NotificationEventType.VALIDATION_FAILED, null, result, null, result.getDescription());
+            NotificationResult result = resultMapper.requestNull();
+            eventPublisher.validationFailed(null, result, null);
             return result;
         }
 
         try {
-            List<NotificationSender> candidates = routingPolicy.order(request, registry.resolveAll(request));
-            if (candidates.isEmpty()) {
-                throw new UnsupportedChannelException(
-                        "No se encontro sender compatible con channel: " + request.getChannel());
-            }
-
-            NotificationResult lastResult = null;
-            for (NotificationSender sender : candidates) {
-                publish(NotificationEventType.SEND_STARTED, request, null, sender.provider(),
-                        "Iniciando envio con provider " + sender.provider());
-                NotificationResult result = sender.send(request);
-                if (result.isSuccessful()) {
-                    publish(NotificationEventType.SEND_SUCCEEDED, request, result, sender.provider(),
-                            result.getDescription());
-                    return result;
-                }
-
-                lastResult = result;
-                publish(NotificationEventType.SEND_FAILED, request, result, sender.provider(), result.getDescription());
-                if (result.getType() != com.pruebalib.notification.api.NotificationResultType.DELIVERY_ERROR) {
-                    if (result.getType() == com.pruebalib.notification.api.NotificationResultType.VALIDATION_ERROR) {
-                        publish(NotificationEventType.VALIDATION_FAILED, request, result, sender.provider(),
-                                result.getDescription());
-                    }
-                    return result;
-                }
-            }
-
-            return lastResult;
+            return sendWithResolvedCandidates(request);
         } catch (NotificationValidationException e) {
-            NotificationResult result = NotificationResult.failure(
-                    com.pruebalib.notification.api.NotificationResultType.VALIDATION_ERROR,
-                    request.getChannel(),
-                    null,
-                    "VALIDATION_ERROR",
-                    "La notificacion no supera la validacion",
-                    e.getMessage());
-            publish(NotificationEventType.VALIDATION_FAILED, request, result, null, result.getDescription());
+            NotificationResult result = resultMapper.validationError(request, e.getMessage());
+            eventPublisher.validationFailed(request, result, null);
             return result;
         } catch (NotificationConfigurationException e) {
-            NotificationResult result = NotificationResult.failure(
-                    com.pruebalib.notification.api.NotificationResultType.CONFIGURATION_ERROR,
-                    request.getChannel(),
-                    null,
-                    "CONFIGURATION_ERROR",
-                    "La configuracion del proveedor es invalida",
-                    e.getMessage());
-            publish(NotificationEventType.SEND_FAILED, request, result, null, result.getDescription());
+            NotificationResult result = resultMapper.configurationError(request, e.getMessage());
+            eventPublisher.sendFailed(request, result, null);
             return result;
         } catch (UnsupportedChannelException e) {
-            NotificationResult result = NotificationResult.failure(
-                    com.pruebalib.notification.api.NotificationResultType.UNSUPPORTED_CHANNEL,
-                    request.getChannel(),
-                    null,
-                    "UNSUPPORTED_CHANNEL",
-                    "No existe un sender compatible",
-                    e.getMessage());
-            publish(NotificationEventType.SEND_FAILED, request, result, null, result.getDescription());
+            NotificationResult result = resultMapper.unsupportedChannel(request, e.getMessage());
+            eventPublisher.sendFailed(request, result, null);
             return result;
         } catch (NotificationDeliveryException e) {
-            NotificationResult result = NotificationResult.failure(
-                    com.pruebalib.notification.api.NotificationResultType.DELIVERY_ERROR,
-                    request.getChannel(),
-                    null,
-                    "DELIVERY_ERROR",
-                    "Fallo el envio de la notificacion",
-                    e.getMessage());
-            publish(NotificationEventType.SEND_FAILED, request, result, null, result.getDescription());
+            NotificationResult result = resultMapper.deliveryError(request, e.getMessage());
+            eventPublisher.sendFailed(request, result, null);
             return result;
         } catch (RuntimeException e) {
-            NotificationResult result = NotificationResult.failure(
-                    com.pruebalib.notification.api.NotificationResultType.DELIVERY_ERROR,
-                    request.getChannel(),
-                    null,
-                    "UNEXPECTED_ERROR",
-                    "Se produjo un error inesperado durante el envio",
-                    e.getMessage());
-            publish(NotificationEventType.SEND_FAILED, request, result, null, result.getDescription());
+            NotificationResult result = resultMapper.unexpectedError(request, e.getMessage());
+            eventPublisher.sendFailed(request, result, null);
             return result;
         }
     }
@@ -146,15 +84,41 @@ class DefaultNotificationService implements NotificationService {
         return CompletableFuture.supplyAsync(() -> send(request), executor);
     }
 
-    private void publish(
-            NotificationEventType type,
-            NotificationRequest request,
-            NotificationResult result,
-            String provider,
-            String message) {
-        NotificationEvent event = new NotificationEvent(type, request, result, provider, message);
-        for (NotificationListener listener : listeners) {
-            listener.onEvent(event);
+    private NotificationResult sendWithResolvedCandidates(NotificationRequest request) {
+        List<NotificationSender> candidates = routingPolicy.order(request, registry.resolveAll(request));
+        if (candidates.isEmpty()) {
+            throw new UnsupportedChannelException(
+                    "No se encontro sender compatible con channel: " + request.getChannel());
         }
+
+        NotificationResult lastResult = null;
+        for (NotificationSender sender : candidates) {
+            NotificationResult result = sendWithSender(request, sender);
+            if (result.isSuccessful()) {
+                return result;
+            }
+
+            lastResult = result;
+            if (result.getType() != com.pruebalib.notification.api.NotificationResultType.DELIVERY_ERROR) {
+                return result;
+            }
+        }
+
+        return lastResult;
+    }
+
+    private NotificationResult sendWithSender(NotificationRequest request, NotificationSender sender) {
+        eventPublisher.sendStarted(request, sender.provider());
+        NotificationResult result = sender.send(request);
+        if (result.isSuccessful()) {
+            eventPublisher.sendSucceeded(request, result, sender.provider());
+            return result;
+        }
+
+        eventPublisher.sendFailed(request, result, sender.provider());
+        if (result.getType() == com.pruebalib.notification.api.NotificationResultType.VALIDATION_ERROR) {
+            eventPublisher.validationFailed(request, result, sender.provider());
+        }
+        return result;
     }
 }
