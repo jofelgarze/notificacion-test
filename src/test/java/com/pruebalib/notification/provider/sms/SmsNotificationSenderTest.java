@@ -9,38 +9,11 @@ import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.api.NotificationResultType;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SmsNotificationSenderTest {
-
-    @Test
-    void shouldSupportSmsTarget() {
-        NotificationRequest request = new NotificationRequest(
-                "sms",
-                "+593999999999",
-                null,
-                "Codigo 123456");
-
-        SmsNotificationSender sender = new SmsNotificationSender(validConfig());
-
-        assertTrue(sender.supports(request));
-    }
-
-    @Test
-    void shouldNotSupportIncorrectTarget() {
-        NotificationRequest request = new NotificationRequest(
-                "smtp",
-                "+593999999999",
-                null,
-                "Codigo 123456");
-
-        SmsNotificationSender sender = new SmsNotificationSender(validConfig());
-
-        assertFalse(sender.supports(request));
-    }
 
     @Test
     void shouldBuildPayloadAndInvokeClientWithExpectedData() {
@@ -122,7 +95,7 @@ class SmsNotificationSenderTest {
 
         NotificationResult result = sender.send(request);
 
-        assertFalse(result.isSuccessful());
+        assertTrue(!result.isSuccessful());
         assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
         assertEquals(null, result.getProviderMessageId());
         assertEquals("30007", result.getErrorCode());

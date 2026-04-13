@@ -5,6 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.pruebalib.notification.api.NotificationRequest;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DefaultNotificationServiceTest {
 
     @Test
+    @DisplayName("Debe usar el sender resuelto por el registry para ejecutar el envio")
     void shouldUseResolvedSenderOnSend() {
         NotificationRequest request = new NotificationRequest(
                 "sms",
@@ -43,6 +45,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe delegar el envio asincrono usando el executor configurado")
     void shouldDelegateAsyncUsingExecutor() {
         NotificationRequest request = new NotificationRequest(
                 "sms",
@@ -66,6 +69,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe mantener el mismo flujo cliente para el canal unificado de email")
     void shouldUseSameClientFlowForUnifiedEmailChannel() {
         NotificationRequest request = new NotificationRequest(
                 "email",
@@ -87,6 +91,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe devolver un error de validacion cuando el request es nulo")
     void shouldReturnValidationErrorWhenRequestIsNull() {
         DefaultNotificationService service = new DefaultNotificationService(new CapturingRegistry(
                 new CapturingSender(NotificationResult.success("unused", "unused"))), Runnable::run);
@@ -99,6 +104,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe devolver channel no soportado cuando el registry no encuentra sender compatible")
     void shouldReturnUnsupportedChannelWhenRegistryCannotResolve() {
         DefaultNotificationService service = new DefaultNotificationService(
                 new ThrowingRegistry(
@@ -113,6 +119,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe mapear errores inesperados del flujo a delivery error")
     void shouldReturnDeliveryErrorForUnexpectedRuntimeException() {
         DefaultNotificationService service = new DefaultNotificationService(
                 new CapturingRegistry(new ThrowingSender(new RuntimeException("boom"))),
@@ -126,6 +133,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe mapear excepciones de validacion del sender a un resultado de validacion")
     void shouldMapValidationExceptionFromSender() {
         DefaultNotificationService service = new DefaultNotificationService(
                 new CapturingRegistry(new ThrowingSender(new NotificationValidationException("recipient invalido"))),
@@ -139,6 +147,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe permitir el flujo sendOrThrow para clientes que prefieren try catch")
     void shouldSupportSendOrThrow() {
         DefaultNotificationService service = new DefaultNotificationService(
                 new CapturingRegistry(new ThrowingSender(new NotificationConfigurationException("config invalida"))),
@@ -149,6 +158,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe publicar eventos de inicio y exito en un envio correcto")
     void shouldPublishStartedAndSucceededEvents() {
         NotificationRequest request = new NotificationRequest(
                 "sms",
@@ -172,6 +182,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe publicar un evento de validacion fallida cuando el request es nulo")
     void shouldPublishValidationFailedEvent() {
         List<NotificationEvent> events = new ArrayList<>();
         DefaultNotificationService service = new DefaultNotificationService(
@@ -187,6 +198,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe publicar un evento de fallo cuando el envio devuelve error")
     void shouldPublishSendFailedEvent() {
         NotificationRequest request = new NotificationRequest(
                 "sms",
@@ -215,6 +227,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe publicar eventos coherentes durante un fallback entre providers")
     void shouldPublishEventsDuringFallback() {
         NotificationRequest request = new NotificationRequest(
                 "email",
@@ -258,6 +271,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe usar el segundo provider cuando el primero falla con delivery error")
     void shouldFallbackToSecondProviderWhenFirstReturnsDeliveryError() {
         NotificationRequest request = new NotificationRequest(
                 "email",
@@ -292,6 +306,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("Debe permitir cambiar el orden de prioridad mediante una routing policy custom")
     void shouldUseCustomRoutingPolicyOrder() {
         NotificationRequest request = new NotificationRequest(
                 "email",
@@ -325,6 +340,7 @@ class DefaultNotificationServiceTest {
     }
 
     @Test
+    @DisplayName("No debe hacer fallback si el primer provider devuelve un error de validacion")
     void shouldNotFallbackWhenFirstReturnsValidationError() {
         NotificationRequest request = new NotificationRequest(
                 "email",

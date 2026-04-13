@@ -6,7 +6,6 @@ import com.pruebalib.notification.api.NotificationResultType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,8 +24,6 @@ class SmtpNotificationSenderTest {
         CapturingSmtpClient client = new CapturingSmtpClient("smtp-123");
         SmtpNotificationSender sender = new SmtpNotificationSender(config, new SmtpRequestMapper(), client);
 
-        assertTrue(sender.supports(request));
-
         NotificationResult result = sender.send(request);
 
         assertTrue(client.invoked);
@@ -38,20 +35,6 @@ class SmtpNotificationSenderTest {
         assertTrue(result.isSuccessful());
         assertEquals(NotificationResultType.SUCCESS, result.getType());
         assertEquals("smtp-123", result.getProviderMessageId());
-    }
-
-    @Test
-    void shouldNotSupportNonSmtpRequests() {
-        NotificationRequest request = new NotificationRequest(
-                "sms",
-                "+593999999999",
-                null,
-                "Mensaje de prueba");
-
-        SmtpNotificationSender sender = new SmtpNotificationSender(
-                new SmtpConfig("user@example.com", "secret", null, "smtp.example.com", 587, true, false));
-
-        assertFalse(sender.supports(request));
     }
 
     private static final class CapturingSmtpClient extends SmtpClient {

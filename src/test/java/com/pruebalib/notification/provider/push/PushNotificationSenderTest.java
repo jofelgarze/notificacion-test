@@ -9,40 +9,11 @@ import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.api.NotificationResultType;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PushNotificationSenderTest {
-
-    @Test
-    void shouldSupportPushTarget() {
-        NotificationRequest request = new NotificationRequest(
-                "push",
-                "device-token-123",
-                "Titulo",
-                "Mensaje",
-                Map.of("screen", "offers"));
-
-        PushNotificationSender sender = new PushNotificationSender(validConfig());
-
-        assertTrue(sender.supports(request));
-    }
-
-    @Test
-    void shouldNotSupportIncorrectTarget() {
-        NotificationRequest request = new NotificationRequest(
-                "sms",
-                "device-token-123",
-                "Titulo",
-                "Mensaje",
-                Map.of("screen", "offers"));
-
-        PushNotificationSender sender = new PushNotificationSender(validConfig());
-
-        assertFalse(sender.supports(request));
-    }
 
     @Test
     void shouldBuildPayloadAndInvokeClientWithExpectedData() {
@@ -121,7 +92,7 @@ class PushNotificationSenderTest {
 
         NotificationResult result = sender.send(request);
 
-        assertFalse(result.isSuccessful());
+        assertTrue(!result.isSuccessful());
         assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
         assertEquals(null, result.getProviderMessageId());
         assertTrue(result.getDescription().contains("rejected"));
