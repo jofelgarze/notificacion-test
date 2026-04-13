@@ -2,6 +2,8 @@ package com.pruebalib.notification.core;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -144,6 +146,115 @@ class DefaultNotificationServiceTest {
 
         assertThrows(NotificationConfigurationException.class,
                 () -> service.sendOrThrow(new NotificationRequest("sms", "+593999999999", null, "Codigo")));
+    }
+
+    @Test
+    void shouldPublishStartedAndSucceededEvents() {
+        NotificationRequest request = new NotificationRequest(
+                "sms",
+                "+593999999999",
+                null,
+                "Codigo");
+        NotificationResult expected = NotificationResult.success("SM123", "queued");
+        CapturingSender sender = new CapturingSender(expected);
+        List<NotificationEvent> events = new ArrayList<>();
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(sender),
+                Runnable::run,
+                List.of(events::add));
+
+        NotificationResult result = service.send(request);
+
+        assertTrue(result.isSuccessful());
+        assertEquals(2, events.size());
+        assertEquals(NotificationEventType.SEND_STARTED, events.get(0).getType());
+        assertEquals(NotificationEventType.SEND_SUCCEEDED, events.get(1).getType());
+    }
+
+    @Test
+    void shouldPublishValidationFailedEvent() {
+        List<NotificationEvent> events = new ArrayList<>();
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(new CapturingSender(NotificationResult.success("unused", "unused"))),
+                Runnable::run,
+                List.of(events::add));
+
+        NotificationResult result = service.send(null);
+
+        assertEquals(NotificationResultType.VALIDATION_ERROR, result.getType());
+        assertEquals(1, events.size());
+        assertEquals(NotificationEventType.VALIDATION_FAILED, events.get(0).getType());
+    }
+
+    @Test
+    void shouldPublishSendFailedEvent() {
+        NotificationRequest request = new NotificationRequest(
+                "sms",
+                "+593999999999",
+                null,
+                "Codigo");
+        NotificationResult failure = NotificationResult.failure(
+                NotificationResultType.DELIVERY_ERROR,
+                "sms",
+                "sms",
+                "DELIVERY_ERROR",
+                "fallo el envio",
+                "fallo el envio");
+        List<NotificationEvent> events = new ArrayList<>();
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(new CapturingSender(failure)),
+                Runnable::run,
+                List.of(events::add));
+
+        NotificationResult result = service.send(request);
+
+        assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
+        assertEquals(2, events.size());
+        assertEquals(NotificationEventType.SEND_STARTED, events.get(0).getType());
+        assertEquals(NotificationEventType.SEND_FAILED, events.get(1).getType());
+    }
+
+    @Test
+    void shouldPublishEventsDuringFallback() {
+        NotificationRequest request = new NotificationRequest(
+                "email",
+                "dest@example.com",
+                "Asunto",
+                "Mensaje");
+
+        NotificationSender first = new CapturingSender(
+                "email",
+                "gmail",
+                NotificationResult.failure(
+                        NotificationResultType.DELIVERY_ERROR,
+                        "email",
+                        "gmail",
+                        "DELIVERY_ERROR",
+                        "gmail failed",
+                        "gmail failed"));
+        NotificationSender second = new CapturingSender(
+                "email",
+                "smtp",
+                NotificationResult.success("email", "smtp", "smtp-123", "sent"));
+        List<NotificationEvent> events = new ArrayList<>();
+
+        DefaultNotificationService service = new DefaultNotificationService(
+                new MultiSenderRegistry(first, second),
+                Runnable::run,
+                List.of(events::add));
+
+        NotificationResult result = service.send(request);
+
+        assertTrue(result.isSuccessful());
+        assertEquals(4, events.size());
+        assertEquals(NotificationEventType.SEND_STARTED, events.get(0).getType());
+        assertEquals("gmail", events.get(0).getProvider());
+        assertEquals(NotificationEventType.SEND_FAILED, events.get(1).getType());
+        assertEquals("gmail", events.get(1).getProvider());
+        assertEquals(NotificationEventType.SEND_STARTED, events.get(2).getType());
+        assertEquals("smtp", events.get(2).getProvider());
+        assertEquals(NotificationEventType.SEND_SUCCEEDED, events.get(3).getType());
+        assertEquals("smtp", events.get(3).getProvider());
     }
 
     @Test

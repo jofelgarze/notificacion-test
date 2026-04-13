@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
-import com.pruebalib.notification.common.exception.NotificationConfigurationException;
 import com.pruebalib.notification.common.exception.NotificationDeliveryException;
 import com.pruebalib.notification.common.exception.NotificationValidationException;
 import com.pruebalib.notification.common.util.RecipientFormatUtils;

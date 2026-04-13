@@ -19,15 +19,26 @@ public final class NotificationServiceFactory {
     }
 
     public static NotificationService create(List<NotificationSender> senders, Executor executor) {
+        return create(senders, executor, List.of());
+    }
+
+    public static NotificationService create(
+            List<NotificationSender> senders,
+            Executor executor,
+            List<NotificationListener> listeners) {
         List<NotificationSender> validatedSenders = validateSenders(senders);
         Executor validatedExecutor = requireExecutor(executor);
 
         NotificationSenderRegistry registry = new InMemoryNotificationSenderRegistry(validatedSenders);
-        return new DefaultNotificationService(registry, validatedExecutor);
+        return new DefaultNotificationService(registry, validatedExecutor, listeners);
     }
 
     public static NotificationService create(List<NotificationSender> senders) {
         return create(senders, DIRECT_EXECUTOR);
+    }
+
+    public static NotificationService create(List<NotificationSender> senders, List<NotificationListener> listeners) {
+        return create(senders, DIRECT_EXECUTOR, listeners);
     }
 
     public static NotificationService create(NotificationSender... senders) {
