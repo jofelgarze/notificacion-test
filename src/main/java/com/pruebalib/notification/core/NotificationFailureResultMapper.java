@@ -17,20 +17,28 @@ final class NotificationFailureResultMapper {
     }
 
     NotificationResult validationError(NotificationRequest request, String technicalMessage) {
+        return validationError(request, null, technicalMessage);
+    }
+
+    NotificationResult validationError(NotificationRequest request, String provider, String technicalMessage) {
         return NotificationResult.failure(
                 NotificationResultType.VALIDATION_ERROR,
                 request.getChannel(),
-                null,
+                provider,
                 "VALIDATION_ERROR",
                 "La notificacion no supera la validacion",
                 technicalMessage);
     }
 
     NotificationResult configurationError(NotificationRequest request, String technicalMessage) {
+        return configurationError(request, null, technicalMessage);
+    }
+
+    NotificationResult configurationError(NotificationRequest request, String provider, String technicalMessage) {
         return NotificationResult.failure(
                 NotificationResultType.CONFIGURATION_ERROR,
                 request.getChannel(),
-                null,
+                provider,
                 "CONFIGURATION_ERROR",
                 "La configuracion del proveedor es invalida",
                 technicalMessage);
@@ -47,20 +55,28 @@ final class NotificationFailureResultMapper {
     }
 
     NotificationResult deliveryError(NotificationRequest request, String technicalMessage) {
+        return deliveryError(request, null, technicalMessage);
+    }
+
+    NotificationResult deliveryError(NotificationRequest request, String provider, String technicalMessage) {
         return NotificationResult.failure(
                 NotificationResultType.DELIVERY_ERROR,
                 request.getChannel(),
-                null,
+                provider,
                 "DELIVERY_ERROR",
                 "Fallo el envio de la notificacion",
                 technicalMessage);
     }
 
     NotificationResult unexpectedError(NotificationRequest request, String technicalMessage) {
+        return unexpectedError(request, null, technicalMessage);
+    }
+
+    NotificationResult unexpectedError(NotificationRequest request, String provider, String technicalMessage) {
         return NotificationResult.failure(
                 NotificationResultType.DELIVERY_ERROR,
                 request.getChannel(),
-                null,
+                provider,
                 "UNEXPECTED_ERROR",
                 "Se produjo un error inesperado durante el envio",
                 technicalMessage);

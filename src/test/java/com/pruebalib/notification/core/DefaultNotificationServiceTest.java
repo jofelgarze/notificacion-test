@@ -12,6 +12,7 @@ import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
 import com.pruebalib.notification.api.NotificationResultType;
 import com.pruebalib.notification.common.exception.NotificationConfigurationException;
+import com.pruebalib.notification.common.exception.NotificationDeliveryException;
 import com.pruebalib.notification.common.exception.NotificationValidationException;
 import com.pruebalib.notification.common.exception.UnsupportedChannelException;
 import com.pruebalib.notification.spi.NotificationSender;
@@ -178,6 +179,7 @@ class DefaultNotificationServiceTest {
         assertEquals(NotificationResultType.VALIDATION_ERROR, result.getType());
         assertEquals("VALIDATION_ERROR", result.getErrorCode());
         assertEquals("recipient invalido", result.getTechnicalMessage());
+        assertEquals("sms", result.getProvider());
     }
 
     @Test
@@ -261,6 +263,33 @@ class DefaultNotificationServiceTest {
         assertEquals(2, events.size());
         assertEquals(NotificationEventType.SEND_STARTED, events.get(0).getType());
         assertEquals(NotificationEventType.SEND_FAILED, events.get(1).getType());
+        assertEquals("sms", events.get(1).getProvider());
+        assertEquals(events.get(0).getTrackerId(), events.get(1).getTrackerId());
+    }
+
+    @Test
+    @DisplayName("Debe conservar el provider en eventos y resultados cuando el sender falla con excepcion")
+    void shouldPreserveProviderWhenSenderThrowsException() {
+        NotificationRequest request = new NotificationRequest(
+                "email",
+                "dest@example.com",
+                "Asunto",
+                "Mensaje");
+        List<NotificationEvent> events = new ArrayList<>();
+        DefaultNotificationService service = new DefaultNotificationService(
+                new CapturingRegistry(new ThrowingSender("email", "gmail", new NotificationDeliveryException("smtp down"))),
+                Runnable::run,
+                List.of(events::add));
+
+        NotificationResult result = service.send(request);
+
+        assertEquals(NotificationResultType.DELIVERY_ERROR, result.getType());
+        assertEquals("gmail", result.getProvider());
+        assertEquals(2, events.size());
+        assertEquals(NotificationEventType.SEND_STARTED, events.get(0).getType());
+        assertEquals("gmail", events.get(0).getProvider());
+        assertEquals(NotificationEventType.SEND_FAILED, events.get(1).getType());
+        assertEquals("gmail", events.get(1).getProvider());
         assertEquals(events.get(0).getTrackerId(), events.get(1).getTrackerId());
     }
 
@@ -520,20 +549,28 @@ class DefaultNotificationServiceTest {
     }
 
     private static final class ThrowingSender implements NotificationSender {
+        private final String channel;
+        private final String provider;
         private final RuntimeException exception;
 
         private ThrowingSender(RuntimeException exception) {
+            this("sms", "sms", exception);
+        }
+
+        private ThrowingSender(String channel, String provider, RuntimeException exception) {
+            this.channel = channel;
+            this.provider = provider;
             this.exception = exception;
         }
 
         @Override
         public String channel() {
-            return "sms";
+            return channel;
         }
 
         @Override
         public String provider() {
-            return "sms";
+            return provider;
         }
 
         @Override

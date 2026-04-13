@@ -46,7 +46,7 @@ class DefaultNotificationService implements NotificationService {
         this.routingPolicy = Objects.requireNonNull(routingPolicy, "routingPolicy no debe ser nulo");
         this.eventPublisher = new NotificationEventPublisher(listeners);
         this.resultMapper = new NotificationFailureResultMapper();
-        this.dispatchExecutor = new NotificationDispatchExecutor(eventPublisher);
+        this.dispatchExecutor = new NotificationDispatchExecutor(eventPublisher, resultMapper);
     }
 
     @Override
