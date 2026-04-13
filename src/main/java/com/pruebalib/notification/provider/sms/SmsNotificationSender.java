@@ -36,10 +36,10 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
 
     @Override
     protected void validateRequest(NotificationRequest request) {
-        Objects.requireNonNull(request, "el objeto request no debe ser nulo");
-        Objects.requireNonNull(request.getChannel(), "channel no debe ser nulo");
-        Objects.requireNonNull(request.getRecipient(), "recipient no debe ser nulo");
-        Objects.requireNonNull(request.getMessage(), "el mensaje no debe ser nulo");
+        requireRequest(request);
+        requireChannel(request);
+        requireRecipient(request);
+        requireMessage(request);
     }
 
     @Override

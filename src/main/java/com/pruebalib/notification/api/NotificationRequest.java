@@ -36,6 +36,7 @@ public final class NotificationRequest {
         return channel;
     }
 
+    @Deprecated(forRemoval = false)
     public String getTarget() {
         return channel;
     }

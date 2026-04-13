@@ -32,6 +32,22 @@ public abstract class AbstractNotificationSender<C extends NotificationSenderCon
         return config;
     }
 
+    protected final void requireRequest(NotificationRequest request) {
+        Objects.requireNonNull(request, "el objeto request no debe ser nulo");
+    }
+
+    protected final void requireChannel(NotificationRequest request) {
+        Objects.requireNonNull(request.getChannel(), "channel no debe ser nulo");
+    }
+
+    protected final void requireRecipient(NotificationRequest request) {
+        Objects.requireNonNull(request.getRecipient(), "recipient no debe ser nulo");
+    }
+
+    protected final void requireMessage(NotificationRequest request) {
+        Objects.requireNonNull(request.getMessage(), "el mensaje no debe ser nulo");
+    }
+
     protected abstract void validateRequest(NotificationRequest request);
 
     protected abstract NotificationResult doSend(NotificationRequest request);
