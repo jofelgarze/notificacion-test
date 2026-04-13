@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
 public final class GmailNotificationSender extends AbstractNotificationSender<GmailConfig> {
@@ -40,6 +41,12 @@ public final class GmailNotificationSender extends AbstractNotificationSender<Gm
         requireChannel(request);
         requireRecipient(request);
         requireMessage(request);
+        if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
+            throw new IllegalArgumentException("GmailNotificationSender solo soporta channel email");
+        }
+        if (!RecipientFormatUtils.isEmail(request.getRecipient())) {
+            throw new IllegalArgumentException("El recipient debe ser un email valido para Gmail");
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
 public final class SmtpNotificationSender extends AbstractNotificationSender<SmtpConfig> {
@@ -40,6 +41,12 @@ public final class SmtpNotificationSender extends AbstractNotificationSender<Smt
         requireChannel(request);
         requireRecipient(request);
         requireMessage(request);
+        if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
+            throw new IllegalArgumentException("SmtpNotificationSender solo soporta channel email");
+        }
+        if (!RecipientFormatUtils.isEmail(request.getRecipient())) {
+            throw new IllegalArgumentException("El recipient debe ser un email valido para SMTP");
+        }
     }
 
     @Override

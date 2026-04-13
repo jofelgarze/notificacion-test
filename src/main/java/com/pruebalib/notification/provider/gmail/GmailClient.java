@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.UUID;
 
-public final class GmailClient {
+public class GmailClient {
 
     public String send(GmailPayload payload, GmailAuthenticator authenticator, GmailConfig config) {
         if (payload == null) {

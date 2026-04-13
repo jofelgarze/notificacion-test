@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
 public final class PushNotificationSender extends AbstractNotificationSender<PushConfig> {
@@ -40,6 +41,12 @@ public final class PushNotificationSender extends AbstractNotificationSender<Pus
         requireChannel(request);
         requireRecipient(request);
         requireMessage(request);
+        if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
+            throw new IllegalArgumentException("PushNotificationSender solo soporta channel push");
+        }
+        if (!RecipientFormatUtils.isPushToken(request.getRecipient())) {
+            throw new IllegalArgumentException("El recipient debe ser un token valido para Push");
+        }
     }
 
     @Override

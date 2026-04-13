@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.UUID;
 
-public final class SmtpClient {
+public class SmtpClient {
 
     public String send(SmtpPayload payload, SmtpAuthenticator authenticator, SmtpConfig config) {
         if (payload == null) {

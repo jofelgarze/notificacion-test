@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.pruebalib.notification.api.NotificationRequest;
 import com.pruebalib.notification.api.NotificationResult;
+import com.pruebalib.notification.common.util.RecipientFormatUtils;
 import com.pruebalib.notification.core.AbstractNotificationSender;
 
 public final class SmsNotificationSender extends AbstractNotificationSender<SmsConfig> {
@@ -40,6 +41,12 @@ public final class SmsNotificationSender extends AbstractNotificationSender<SmsC
         requireChannel(request);
         requireRecipient(request);
         requireMessage(request);
+        if (!CHANNEL.equalsIgnoreCase(request.getChannel())) {
+            throw new IllegalArgumentException("SmsNotificationSender solo soporta channel sms");
+        }
+        if (!RecipientFormatUtils.isPhone(request.getRecipient())) {
+            throw new IllegalArgumentException("El recipient debe ser un numero telefonico valido para SMS");
+        }
     }
 
     @Override
